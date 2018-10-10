@@ -1,0 +1,10 @@
+go-audit
+go-audit.yaml
+!examples/**
+*.pprof
+*.test
+*.deb
+*.out
+node_modules
+vendor/
+.vscode
