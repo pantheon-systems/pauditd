@@ -5,10 +5,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/output"
-	"github.com/pantheon-systems/go-audit/pkg/parser"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output"
+	"github.com/pantheon-systems/pauditd/pkg/parser"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 const (

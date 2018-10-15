@@ -53,7 +53,7 @@ func Configure(config *viper.Viper) error {
 
 	hostname, _ := os.Hostname()
 	simpleHostName := strings.Split(hostname, ".")[0]
-	statsPrefix := fmt.Sprintf("go-audit.%s", simpleHostName)
+	statsPrefix := fmt.Sprintf("pauditd.%s", simpleHostName)
 	client, err = statsd.New(
 		statsd.Prefix(statsPrefix),
 		statsd.Mute(!statsEnabled),

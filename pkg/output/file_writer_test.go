@@ -34,7 +34,7 @@ func Test_newFileWriter(t *testing.T) {
 	// chmod error
 	c = viper.New()
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	w, err = newFileWriter(c)
 	assert.EqualError(t, err, "Output file mode should be greater than 0000")
 	assert.Nil(t, w)
@@ -42,7 +42,7 @@ func Test_newFileWriter(t *testing.T) {
 	// uid error
 	c = viper.New()
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	c.Set("output.file.mode", 0644)
 	w, err = newFileWriter(c)
 	assert.EqualError(t, err, "Could not find uid for user . Error: user: unknown user ")
@@ -61,7 +61,7 @@ func Test_newFileWriter(t *testing.T) {
 	// gid error
 	c = viper.New()
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	c.Set("output.file.mode", 0644)
 	c.Set("output.file.user", u.Username)
 	w, err = newFileWriter(c)
@@ -71,12 +71,12 @@ func Test_newFileWriter(t *testing.T) {
 	// chown error
 	c = viper.New()
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	c.Set("output.file.mode", 0644)
 	c.Set("output.file.user", "root")
 	c.Set("output.file.group", "root")
 	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Could not chown output file. Error: chown /tmp/go-audit.test.log: operation not permitted")
+	assert.EqualError(t, err, "Could not chown output file. Error: chown /tmp/pauditd.test.log: operation not permitted")
 	assert.Nil(t, w)
 }
 
@@ -94,7 +94,7 @@ func Test_fileRotationAllGoodFile(t *testing.T) {
 	// all good file
 	c := viper.New()
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	c.Set("output.file.mode", 0644)
 	c.Set("output.file.user", u.Username)
 	c.Set("output.file.group", g.Name)
@@ -109,11 +109,11 @@ func Test_fileRotationAllGoodFile(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// File rotation
-	os.Rename(path.Join(os.TempDir(), "go-audit.test.log"), path.Join(os.TempDir(), "go-audit.test.log.rotated"))
-	_, err = os.Stat(path.Join(os.TempDir(), "go-audit.test.log"))
+	os.Rename(path.Join(os.TempDir(), "pauditd.test.log"), path.Join(os.TempDir(), "pauditd.test.log.rotated"))
+	_, err = os.Stat(path.Join(os.TempDir(), "pauditd.test.log"))
 	assert.True(t, os.IsNotExist(err))
 	syscall.Kill(syscall.Getpid(), syscall.SIGUSR1)
 	time.Sleep(100 * time.Millisecond)
-	_, err = os.Stat(path.Join(os.TempDir(), "go-audit.test.log"))
+	_, err = os.Stat(path.Join(os.TempDir(), "pauditd.test.log"))
 	assert.Nil(t, err)
 }

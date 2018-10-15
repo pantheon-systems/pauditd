@@ -15,11 +15,11 @@ bench:
 
 bench-cpu:
 	go test -bench=. -benchtime=5s -cpuprofile=cpu.pprof
-	go tool pprof go-audit.test cpu.pprof
+	go tool pprof pauditd.test cpu.pprof
 
 bench-cpu-long:
 	go test -bench=. -benchtime=60s -cpuprofile=cpu.pprof
-	go tool pprof go-audit.test cpu.pprof
+	go tool pprof pauditd.test cpu.pprof
 
 .PHONY: test test-cov-html bench bench-cpu bench-cpu-long bin
 .DEFAULT_GOAL := bin

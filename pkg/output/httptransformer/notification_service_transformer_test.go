@@ -2,11 +2,12 @@ package httptransformer
 
 import (
 	"bytes"
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/spf13/viper"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/spf13/viper"
 
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"

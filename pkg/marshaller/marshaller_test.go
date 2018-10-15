@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
 	"regexp"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/output"
-	"github.com/pantheon-systems/go-audit/pkg/parser"
+	"github.com/spf13/viper"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output"
+	"github.com/pantheon-systems/pauditd/pkg/parser"
 	"github.com/stretchr/testify/assert"
 )
 

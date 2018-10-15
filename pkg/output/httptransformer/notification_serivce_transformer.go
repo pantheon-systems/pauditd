@@ -3,11 +3,12 @@ package httptransformer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 
 	"github.com/satori/go.uuid"
 )
@@ -49,7 +50,7 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 		metric.GetClient().Increment("notif-service-transformer.topic.no-topic")
 		return nil, err
 	}
-	
+
 	// This is to monitor other topics, we are getting some strange topic names
 	// which this is going to be used to debug. SHOULD BE REMOVED WHEN COMPLETE
 	if matches[1] != "binding-file-ops" {

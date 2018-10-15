@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/output/httptransformer"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"

@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -111,7 +111,7 @@ func TestNewNetlinkClient(t *testing.T) {
 
 // Helper to make a client listening on a unix socket
 func makeNelinkClient(t *testing.T) *NetlinkClient {
-	os.Remove("go-audit.test.sock")
+	os.Remove("pauditd.test.sock")
 	fd, err := syscall.Socket(syscall.AF_UNIX, syscall.SOCK_RAW, 0)
 	if err != nil {
 		t.Fatal("Could not create a socket:", err)
@@ -119,7 +119,7 @@ func makeNelinkClient(t *testing.T) *NetlinkClient {
 
 	n := &NetlinkClient{
 		fd:      fd,
-		address: &syscall.SockaddrUnix{Name: "go-audit.test.sock"},
+		address: &syscall.SockaddrUnix{Name: "pauditd.test.sock"},
 		buf:     make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
 	}
 
