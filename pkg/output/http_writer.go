@@ -87,10 +87,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 				continue
 			}
 
-			traceID, err := uuid.NewV1()
-			if err != nil {
-				slog.Error.Printf("Could not generate UUID: %s", err.Error())
-			}
+			traceID := uuid.NewV1()
 
 			if w.debug {
 				slog.Info.Printf("{ trace_id: \"%s\", msg: %s }", traceID, strings.TrimSuffix(string(transport.message), "\n"))
