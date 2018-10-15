@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/pantheon-systems/go-audit/pkg/parser"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/parser"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 // AuditWriter is the class that encapsulates the io.Writer for output

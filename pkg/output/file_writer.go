@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 
 	"github.com/spf13/viper"
 )

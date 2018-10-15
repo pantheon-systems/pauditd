@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/go-audit/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 
-	"github.com/pantheon-systems/go-audit/pkg/marshaller"
-	"github.com/pantheon-systems/go-audit/pkg/output"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/marshaller"
+	"github.com/pantheon-systems/pauditd/pkg/output"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +33,7 @@ func Test_loadConfig(t *testing.T) {
 	assert.Equal(t, 500, config.GetInt("message_tracking.max_out_of_order"), "message_tracking.max_out_of_order should default to 500")
 	assert.Equal(t, false, config.GetBool("output.syslog.enabled"), "output.syslog.enabled should default to false")
 	assert.Equal(t, 132, config.GetInt("output.syslog.priority"), "output.syslog.priority should default to 132")
-	assert.Equal(t, "go-audit", config.GetString("output.syslog.tag"), "output.syslog.tag should default to go-audit")
+	assert.Equal(t, "pauditd", config.GetString("output.syslog.tag"), "output.syslog.tag should default to pauditd")
 	assert.Equal(t, 3, config.GetInt("output.syslog.attempts"), "output.syslog.attempts should default to 3")
 	assert.Equal(t, 0, config.GetInt("log.flags"), "log.flags should default to 0")
 	assert.Equal(t, 0, slog.Info.Flags(), "stdout log flags was wrong")
@@ -135,7 +135,7 @@ func Test_createOutput(t *testing.T) {
 
 	c.Set("output.file.enabled", true)
 	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "go-audit.test.log"))
+	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
 	c.Set("output.file.mode", 0644)
 	c.Set("output.file.user", u.Username)
 	c.Set("output.file.group", g.Name)
@@ -334,7 +334,7 @@ func Benchmark_MultiPacketMessage(b *testing.B) {
 	//&{1309,,argc=3,a0="ls",a1="--color=auto",a2="-alF",1222763,1459376866.885}
 	data[1] = []byte{73, 0, 0, 0, 29, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 97, 117, 100, 105, 116, 40, 49, 52, 53, 57, 51, 55, 54, 56, 54, 54, 46, 56, 56, 53, 58, 49, 50, 50, 50, 55, 54, 51, 41, 58, 32, 97, 114, 103, 99, 61, 51, 32, 97, 48, 61, 34, 108, 115, 34, 32, 97, 49, 61, 34, 45, 45, 99, 111, 108, 111, 114, 61, 97, 117, 116, 111, 34, 32, 97, 50, 61, 34, 45, 97, 108, 70, 34}
 
-	//&{1307,,,cwd="/home/ubuntu/src/slack-github.com/rhuber/go-audit-new",1222763,1459376866.885}
+	//&{1307,,,cwd="/home/ubuntu/src/slack-github.com/rhuber/pauditd-new",1222763,1459376866.885}
 	data[2] = []byte{91, 0, 0, 0, 27, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 97, 117, 100, 105, 116, 40, 49, 52, 53, 57, 51, 55, 54, 56, 54, 54, 46, 56, 56, 53, 58, 49, 50, 50, 50, 55, 54, 51, 41, 58, 32, 32, 99, 119, 100, 61, 34, 47, 104, 111, 109, 101, 47, 117, 98, 117, 110, 116, 117, 47, 115, 114, 99, 47, 115, 108, 97, 99, 107, 45, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 114, 104, 117, 98, 101, 114, 47, 103, 111, 45, 97, 117, 100, 105, 116, 45, 110, 101, 119, 34}
 
 	//&{1302,,item=0,name="/bin/ls",inode=262316,dev=ca:01,mode=0100755,ouid=0,ogid=0,rdev=00:00,nametype=NORMAL,1222763,1459376866.885}
@@ -371,7 +371,7 @@ func (t *noopWriter) Write(a []byte) (int, error) {
 }
 
 func createTempFile(t *testing.T, name string, contents string) string {
-	file := os.TempDir() + string(os.PathSeparator) + "go-audit." + name
+	file := os.TempDir() + string(os.PathSeparator) + "pauditd." + name
 	if err := ioutil.WriteFile(file, []byte(contents), os.FileMode(0644)); err != nil {
 		t.Fatal("Failed to create temp file", err)
 	}

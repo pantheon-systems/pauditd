@@ -3,11 +3,12 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"github.com/pantheon-systems/go-audit/pkg/metric"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 )
 
 const (
@@ -65,7 +66,7 @@ func NewAuditMessageGroup(am *AuditMessage) *AuditMessageGroup {
 	return amg
 }
 
-// Creates a new go-audit message from a netlink message
+// Creates a new pauditd message from a netlink message
 func NewAuditMessage(nlm *syscall.NetlinkMessage) *AuditMessage {
 	aTime, seq := parseAuditHeader(nlm)
 	return &AuditMessage{

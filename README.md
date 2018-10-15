@@ -4,7 +4,7 @@
 
 ## About
 
-go-audit is an alternative to the auditd daemon that ships with many distros.
+pauditd is an alternative to the auditd daemon that ships with many distros.
 
 ## Audit Documentation
 
@@ -26,7 +26,7 @@ Good documentation on understanding audit messages:
 
     ```sh
     git clone (this repo)
-    cd go-audit
+    cd pauditd
     ```
 
 4. Build the binary
@@ -35,7 +35,7 @@ Good documentation on understanding audit messages:
     make
     ```
 
-5. Copy the binary `go-audit` to wherever you'd like
+5. Copy the binary `pauditd` to wherever you'd like
 
 ### Testing
 
@@ -47,20 +47,20 @@ Good documentation on understanding audit messages:
 
 ### Running as a service
 
-Check the [contrib](contrib) folder, it contains examples for how to run `go-audit` as a proper service on your machine.
+Check the [contrib](contrib) folder, it contains examples for how to run `pauditd` as a proper service on your machine.
 
 ### Example Config
 
-See [go-audit.yaml.example](go-audit.yaml.example)
+See [pauditd.yaml.example](pauditd.yaml.example)
 
 ### Metrics
-Metrics have been added and are provided by the statsd client. Statsd is the only supported metrics in go-audit at this time. The available metrics are as follows:
+Metrics have been added and are provided by the statsd client. Statsd is the only supported metrics in pauditd at this time. The available metrics are as follows:
 
-- `go-audit.<hostname>.messages`
+- `pauditd.<hostname>.messages`
   - netlink_dropped
   - total
   - filtered
-- `go-audit.<hostname>.http_writer`
+- `pauditd.<hostname>.http_writer`
   - total_messages
   - dropped_messages
   - http_code
@@ -79,7 +79,7 @@ The http writer output plugin allows you to send audit messages to an http servi
 
 ### Noop Transformer
 
-Default transformer used when none is specified, does not touch the []byte message body and ships the go-audit message as the body.
+Default transformer used when none is specified, does not touch the []byte message body and ships the pauditd message as the body.
 
 ### NotificationServiceTransformer
 
@@ -94,11 +94,11 @@ type notification struct {
 }
 ```
 
-The service expects this as a POST and as json. The data field is the []byte message value from go-audit. This could be used to send to any message bus as the proxy allows for a single service contract without care for the end destination.
+The service expects this as a POST and as json. The data field is the []byte message value from pauditd. This could be used to send to any message bus as the proxy allows for a single service contract without care for the end destination.
 
 #### Adding a tranformer for the http writer
 
-To send messages to a web service that requires a DTO/Service Contract that does not match the structure of the messages as they come from go-audit you will need to implement a `ResponseBodyTransformer`. This interface contains a single function to Transform the body of the http request to the service into the structure required. It is passed a []byte which are the bytes from go-audit representing the message and a uuid which is the trace id for the message and request going out to the service.
+To send messages to a web service that requires a DTO/Service Contract that does not match the structure of the messages as they come from pauditd you will need to implement a `ResponseBodyTransformer`. This interface contains a single function to Transform the body of the http request to the service into the structure required. It is passed a []byte which are the bytes from pauditd representing the message and a uuid which is the trace id for the message and request going out to the service.
 
 This is stored as a singleton and should be thread/go-routine safe in the way that it stores its state if it requires state to operate.
 
@@ -117,8 +117,8 @@ type ResponseBodyTransformer interface {
 
 ### I am seeing `Error during message receive: no buffer space available` in the logs
 
-This is because `go-audit` is not receiving data as quickly as your system is generating it. You can increase
-the receive buffer system wide and maybe it will help. Best to try and reduce the amount of data `go-audit` has
+This is because `pauditd` is not receiving data as quickly as your system is generating it. You can increase
+the receive buffer system wide and maybe it will help. Best to try and reduce the amount of data `pauditd` has
 to handle.
 
 If reducing audit velocity is not an option you can try increasing `socket_buffer.receive` in your config.

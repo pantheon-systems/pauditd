@@ -32,7 +32,7 @@ output:
     enabled: true
 
     # Total number of attempts to write a line before considering giving up
-    # If a write fails go-audit will sleep for 1 second before retrying
+    # If a write fails pauditd will sleep for 1 second before retrying
     # Default is 3
     attempts: 2
 
@@ -90,7 +90,7 @@ output:
     priority: 129 # local0 | emerg
 
     # Typically the name of the program generating the message. The PID is of the process is appended for you: [1233]
-    # Default value is "go-audit"
+    # Default value is "pauditd"
     tag: "audit-thing"
 
   # Appends logs to a file
@@ -100,7 +100,7 @@ output:
 
     # Path of the file to write lines to
     # The actual file will be created if it is missing but make sure the parent directory exists
-    path: /var/log/go-audit/go-audit.log
+    path: /var/log/pauditd/pauditd.log
 
     # Octal file mode for the log file, make sure to always have a leading 0
     mode: 0600
@@ -152,7 +152,7 @@ rules:
 # - RuleKey filters
 # Order matters for rule ordering within a specific syscall/message_type or a rule key
 filters:
-  - syscall: 49 # The syscall id of the message group (a single log line from go-audit), to test against the regex
+  - syscall: 49 # The syscall id of the message group (a single log line from pauditd), to test against the regex
     message_type: 1306 # The message type identifier containing the data to test against the regex
     regex: saddr=(10..|0A..) # The regex to test against the message specific message types data
   - key: passwd-write-log # the rule key for the messages to filter (-k on audit rule)

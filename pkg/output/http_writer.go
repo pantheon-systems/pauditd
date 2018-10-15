@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/output/httptransformer"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"
@@ -87,10 +87,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 				continue
 			}
 
-			traceID, err := uuid.NewV1()
-			if err != nil {
-				slog.Error.Printf("Could not generate UUID: %s", err.Error())
-			}
+			traceID := uuid.NewV1()
 
 			if w.debug {
 				slog.Info.Printf("{ trace_id: \"%s\", msg: %s }", traceID, strings.TrimSuffix(string(transport.message), "\n"))

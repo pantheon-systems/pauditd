@@ -1,5 +1,5 @@
-go-audit
-go-audit.yaml
+pauditd
+pauditd.yaml
 !examples/**
 *.pprof
 *.test

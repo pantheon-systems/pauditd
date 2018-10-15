@@ -9,11 +9,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/pantheon-systems/go-audit/pkg/marshaller"
-	"github.com/pantheon-systems/go-audit/pkg/metric"
-	"github.com/pantheon-systems/go-audit/pkg/output"
-	"github.com/pantheon-systems/go-audit/pkg/parser"
-	"github.com/pantheon-systems/go-audit/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/marshaller"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output"
+	"github.com/pantheon-systems/pauditd/pkg/parser"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 )
 
@@ -34,7 +34,7 @@ func loadConfig(configFile string) (*viper.Viper, error) {
 	config.SetDefault("message_tracking.max_out_of_order", 500)
 	config.SetDefault("output.syslog.enabled", false)
 	config.SetDefault("output.syslog.priority", int(syslog.LOG_LOCAL0|syslog.LOG_WARNING))
-	config.SetDefault("output.syslog.tag", "go-audit")
+	config.SetDefault("output.syslog.tag", "pauditd")
 	config.SetDefault("output.syslog.attempts", "3")
 	config.SetDefault("log.flags", 0)
 	config.SetDefault("parser.enable_uid_caching", "false")
