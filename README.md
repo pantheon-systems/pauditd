@@ -18,24 +18,21 @@ Good documentation on understanding audit messages:
 ### Installation
 
 1. Install [golang](https://golang.org/doc/install), version 1.7 or greater is required
-2. Install [`govendor`](https://github.com/kardianos/govendor) if you haven't already
 
-    ```go get -u github.com/kardianos/govendor```
-
-3. Clone the repo
+2. Clone the repo
 
     ```sh
     git clone (this repo)
     cd pauditd
     ```
 
-4. Build the binary
+3. Build the binary
 
     ```sh
     make
     ```
 
-5. Copy the binary `pauditd` to wherever you'd like
+4. Copy the binary `pauditd` to wherever you'd like
 
 ### Testing
 
