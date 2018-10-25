@@ -1,8 +1,7 @@
 FROM alpine:3.8
 
-ADD pauditd /pauditd
-
 RUN apk add audit
 
+ADD pauditd /opt/pauditd/pauditd
 
-CMD /pauditd -config /config/pauditd.yaml
+CMD /opt/pauditd/pauditd -config /config/pauditd.yaml
