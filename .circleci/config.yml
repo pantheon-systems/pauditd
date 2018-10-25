@@ -19,7 +19,7 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run: make
+      - run: make build
       - store_artifacts:
           path: /go/src/github.com/pantheon-systems/pauditd/pauditd
       - persist_to_workspace:
@@ -37,7 +37,7 @@ jobs:
       - attach_workspace:
           at: .
       - run: make build-docker
-      - run: make push
+      - run: make push-circle
 workflows:
   version: 2
   test-build-release:
