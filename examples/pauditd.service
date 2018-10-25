@@ -1,0 +1,17 @@
+[Unit]
+Description=Security Auditing Service
+RefuseManualStop=yes
+After=network-online.target nss-lookup.target local-fs.target systemd-tmpfiles-setup.service
+
+[Service]
+ExecStartPost=-/sbin/augenrules --load
+ExecStart=/opt/pauditd/pauditd -config /etc/audit/pauditd.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+
+# hard cap 1 full core
+CPUQuota=100%
+CPUShares=100 
+
+[Install]
+WantedBy=multi-user.target

@@ -22,7 +22,22 @@ jobs:
       - run: make
       - store_artifacts:
           path: /go/src/github.com/pantheon-systems/pauditd/pauditd
-
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./Makefile
+            - ./pauditd
+            - ./Dockerfile
+  build-docker-image:
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/github.com/pantheon-systems/pauditd
+    steps:
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
+      - run: make build-docker
+      - run: make push
 workflows:
   version: 2
   test-build-release:
@@ -31,3 +46,11 @@ workflows:
       - build:
           requires:
             - test
+      - build-docker-image:
+          requires:
+            - test
+            - build
+          filters:
+            branches:
+              only:
+                - master
