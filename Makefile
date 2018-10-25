@@ -45,7 +45,7 @@ bench-cpu-long:
 	go test -bench=. -benchtime=60s -cpuprofile=cpu.pprof
 	go tool pprof pauditd.test cpu.pprof
 
-docker-build:
+build-docker:
 	docker build -t $(IMAGE) .
 
 push-circle: setup-quay
