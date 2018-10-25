@@ -1,3 +1,5 @@
+APP:=pauditd
+
 ifndef CIRCLECI
   BUILD_NUM := dev-$(shell git rev-parse --short HEAD)
 endif
