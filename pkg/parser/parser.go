@@ -16,6 +16,15 @@ const (
 	HEADER_START_POS          = 6               // Position in the audit header that the data starts
 	COMPLETE_AFTER            = time.Second * 2 // Log a message after this time or EOE
 	MAX_AUDIT_RULE_KEY_LENGTH = 128
+
+	AUDIT_TTY      = 1319 // Input on an administrative TTY
+	AUDIT_SYSCALL  = 1300 // Syscall event
+	AUDIT_EXECVE   = 1309 // execve arguments
+	AUDIT_CWD      = 1307 // Current working directory
+	AUDIT_SOCKADDR = 1306 // sockaddr copied as syscall arg
+
+	// TTY_RULE_KEY is the rule key that will be used when TTY messages are detected
+	TTY_RULE_KEY = "tty"
 )
 
 // This global is not great but since parser is a package with no specific construct
@@ -103,13 +112,17 @@ func parseAuditHeader(msg *syscall.NetlinkMessage) (time string, seq int) {
 func (amg *AuditMessageGroup) AddMessage(am *AuditMessage) {
 	parseTimer := metric.GetClient().NewTiming()
 	amg.Msgs = append(amg.Msgs, am)
-	//TODO: need to find more message types that won't contain uids, also make these constants
+	//TODO: need to find more message types that won't contain uids
 	switch am.Type {
-	case 1309, 1307, 1306:
+	case AUDIT_EXECVE, AUDIT_CWD, AUDIT_SOCKADDR:
 		// Don't map uids here
-	case 1300:
+	case AUDIT_SYSCALL:
 		amg.findSyscall(am)
 		amg.findRuleKey(am)
+		amg.mapUids(am)
+	case AUDIT_TTY:
+		// pam_tty_audit does not supply a rule key
+		amg.RuleKey = TTY_RULE_KEY
 		amg.mapUids(am)
 	default:
 		amg.mapUids(am)
