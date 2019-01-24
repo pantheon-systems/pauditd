@@ -121,6 +121,7 @@ func (amg *AuditMessageGroup) AddMessage(am *AuditMessage) {
 		amg.findRuleKey(am)
 		amg.mapUids(am)
 	case AUDIT_TTY:
+		// pam_tty_audit does not supply a rule key
 		amg.RuleKey = TTY_RULE_KEY
 		amg.mapUids(am)
 	default:
