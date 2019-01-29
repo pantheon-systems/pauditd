@@ -172,6 +172,20 @@ sudo systemctl mask systemd-journald-audit.socket
 
 You may have to restart the _systemd-journald.service_ after masking the socket.
 
+if this problem persists it is because the netlink socket buffers are getting full and the default for overflow is to dump to the kernel logging sub-system. This can be disabled by setting the audit configuration option for what to do when the enqueue on the buffer fails. You can set this setting by using a special audit rule in the `pauditd.yaml` configuration file:
+
+```
+-f N
+```
+
+Where the `N` is either 0, 1 or 2.
+
+```
+0 -> discard
+1 -> kernel logging subsystem
+2 -> panic
+```
+
 ## Thanks
 
 To slackhq for the inspiration via https://github.com/slackhq/go-audit
