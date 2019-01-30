@@ -60,14 +60,14 @@ workflows:
       - build-release:
           requires:
             - test
-#         filters:
-#           branches:
-#             only:
-#               - master
+          filters:
+            branches:
+              only:
+                - master
       - publish-rpm:
           requires:
             - build-release
-#         filters:
-#           branches:
-#             only:
-#               - master
+          filters:
+            branches:
+              only:
+                - master
