@@ -12,45 +12,37 @@ jobs:
           root: .
           paths:
             - ./
-  build:
+
+  build-release:
     docker:
       - image: circleci/golang:1.11
     working_directory: /go/src/github.com/pantheon-systems/pauditd
     steps:
       - attach_workspace:
           at: .
-      - run: make build
-      - store_artifacts:
-          path: /go/src/github.com/pantheon-systems/pauditd/pauditd
-      - persist_to_workspace:
-          root: .
-          paths:
-            - ./Makefile
-            - ./pauditd
-            - ./Dockerfile
-  build-docker-image:
-    docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/github.com/pantheon-systems/pauditd
-    steps:
       - setup_remote_docker
-      - attach_workspace:
-          at: .
-      - run: make build-docker
-      - run: make push-circle
+      - run: make setup-quay
+      - run: |
+          curl -s https://api.github.com/repos/pantheon-systems/autotag/releases/latest | \
+            grep browser_download | \
+            grep -i linux | \
+            cut -d '"' -f 4 | \
+            xargs curl -o ~/autotag -L \
+            && chmod 755 ~/autotag
+      - run: ~/autotag
+      - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+      - store_artifacts:
+          path: /go/src/github.com/pantheon-systems/pauditd/dist
+
 workflows:
   version: 2
   test-build-release:
     jobs:
       - test
-      - build:
+      - build-release:
           requires:
             - test
-      - build-docker-image:
-          requires:
-            - test
-            - build
-          filters:
-            branches:
-              only:
-                - master
+#         filters:
+#           branches:
+#             only:
+#               - master

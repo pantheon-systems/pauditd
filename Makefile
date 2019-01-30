@@ -9,11 +9,7 @@ endif
 
 ifdef CIRCLE_BUILD_NUM
   BUILD_NUM := $(CIRCLE_BUILD_NUM)
-  ifeq (email-required, $(shell docker login --help | grep -q Email && echo email-required))
-    QUAY := docker login -p "$$QUAY_PASSWD" -u "$$QUAY_USER" -e "unused@unused" quay.io
-  else
-    QUAY := docker login -p "$$QUAY_PASSWD" -u "$$QUAY_USER" quay.io
-  endif
+  QUAY := docker login -p "$$QUAY_PASSWD" -u "$$QUAY_USER" quay.io
 endif
 
 # These can be overridden
@@ -55,7 +51,7 @@ push:
 	docker push $(IMAGE)
 
 setup-quay:: ## setup docker login for quay.io
-ifdef CIRCLE_BUILD_NUM	
+ifdef CIRCLE_BUILD_NUM
 	@$(QUAY) > /dev/null
 endif
 
