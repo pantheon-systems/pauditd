@@ -23,6 +23,7 @@ jobs:
       - setup_remote_docker
       - run: make setup-quay
       - run: |
+          sudo apt update && sudo apt install rpm && \
           curl -s https://api.github.com/repos/pantheon-systems/autotag/releases/latest | \
             grep browser_download | \
             grep -i linux | \
@@ -44,7 +45,7 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run: gem install package_cloud --no-rdoc --no-ri
+      - run: gem install package_cloud
       - run: package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
       - run: package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
       - run: package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
