@@ -1,3 +1,4 @@
+dist/
 pauditd
 pauditd.yaml
 !examples/**
