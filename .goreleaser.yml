@@ -1,0 +1,56 @@
+project_name: pauditd
+
+builds:
+- binary: pauditd
+  env:
+    - CGO_ENABLED=0
+  ldflags:
+    - -s -w
+  goos:
+    - linux
+  goarch:
+    - amd64
+archive:
+  replacements:
+    linux: Linux
+    amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - Merge pull request
+    - Merge branch
+
+## generate RPM and DEB packages
+nfpm:
+  vendor: "Pantheon Systems"
+  homepage: "https://github.com/pantheon-systems/pauditd"
+  maintainer: engineering <engineering@pantheon.io>
+  description: "go alternative to auditd"
+  license: MIT
+  formats:
+    - rpm
+  overrides:
+    rpm:
+      name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
+      replacements:
+        amd64: x86_64
+
+## build and push
+dockers:
+  -
+    dockerfile: Dockerfile
+    binary: pauditd
+    goos: linux
+    goarch: amd64
+    image_templates:
+    - "quay.io/getpantheon/pauditd:{{ .Tag }}"                  # v1.0.0
+    - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
+    - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
+    - "quay.io/getpantheon/pauditd:latest"

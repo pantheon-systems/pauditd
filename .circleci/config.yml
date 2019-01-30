@@ -12,44 +12,61 @@ jobs:
           root: .
           paths:
             - ./
-  build:
+
+  build-release:
     docker:
       - image: circleci/golang:1.11
     working_directory: /go/src/github.com/pantheon-systems/pauditd
     steps:
       - attach_workspace:
           at: .
-      - run: make build
+      - setup_remote_docker
+      - run: make setup-quay
+      - run: |
+          sudo apt update && sudo apt install rpm && \
+          curl -s https://api.github.com/repos/pantheon-systems/autotag/releases/latest | \
+            grep browser_download | \
+            grep -i linux | \
+            cut -d '"' -f 4 | \
+            xargs curl -o ~/autotag -L \
+            && chmod 755 ~/autotag
+      - run: ~/autotag
+      - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
       - store_artifacts:
-          path: /go/src/github.com/pantheon-systems/pauditd/pauditd
+          path: /go/src/github.com/pantheon-systems/pauditd/dist
       - persist_to_workspace:
           root: .
           paths:
-            - ./Makefile
-            - ./pauditd
-            - ./Dockerfile
-  build-docker-image:
+            - ./dist
+
+  publish-rpm:
     docker:
-      - image: circleci/golang:1.11
-    working_directory: /go/src/github.com/pantheon-systems/pauditd
+      - image: circleci/ruby:2.5
     steps:
-      - setup_remote_docker
       - attach_workspace:
           at: .
-      - run: make build-docker
-      - run: make push-circle
+      - run: gem install package_cloud
+      - run: package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/el/7 ./dist/*.rpm
+
+
 workflows:
   version: 2
   test-build-release:
     jobs:
       - test
-      - build:
+      - build-release:
           requires:
             - test
-      - build-docker-image:
+          filters:
+            branches:
+              only:
+                - master
+      - publish-rpm:
           requires:
-            - test
-            - build
+            - build-release
           filters:
             branches:
               only:
