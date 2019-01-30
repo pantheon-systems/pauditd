@@ -38,7 +38,7 @@ nfpm:
     - rpm
   overrides:
     rpm:
-      name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Env.CIRCLE_BUILD_NUMBER }}-{{ .Arch }}"
+      name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
       replacements:
         amd64: x86_64
 

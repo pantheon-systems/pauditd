@@ -33,6 +33,23 @@ jobs:
       - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
       - store_artifacts:
           path: /go/src/github.com/pantheon-systems/pauditd/dist
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./dist
+
+  publish-rpm:
+    docker:
+      - image: circleci/ruby:2.5
+    steps:
+      - attach_workspace:
+          at: .
+      - run: gem install package_cloud --no-rdoc --no-ri
+      - run: package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
+      - run: package_cloud push pantheon/public/el/7 ./dist/*.rpm
+
 
 workflows:
   version: 2
@@ -42,6 +59,13 @@ workflows:
       - build-release:
           requires:
             - test
+#         filters:
+#           branches:
+#             only:
+#               - master
+      - publish-rpm:
+          requires:
+            - build-release
 #         filters:
 #           branches:
 #             only:
