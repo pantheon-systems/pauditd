@@ -2,7 +2,7 @@ package metric
 
 import (
 	"fmt"
-	"os"
+	"github.com/pantheon-systems/pauditd/pkg/system"
 	"strconv"
 	"strings"
 
@@ -51,7 +51,7 @@ func Configure(config *viper.Viper) error {
 		statsSampleRate = float32(sampleRate)
 	}
 
-	hostname, _ := os.Hostname()
+	hostname := system.GetHostname()
 	simpleHostName := strings.Split(hostname, ".")[0]
 	statsPrefix := fmt.Sprintf("pauditd.%s", simpleHostName)
 	client, err = statsd.New(

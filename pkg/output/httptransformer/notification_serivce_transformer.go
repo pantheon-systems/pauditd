@@ -3,6 +3,7 @@ package httptransformer
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pantheon-systems/pauditd/pkg/system"
 	"os"
 	"regexp"
 	"strings"
@@ -89,10 +90,7 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 }
 
 func getHostname() string {
-	host, err := os.Hostname()
-	if err != nil {
-		return ""
-	}
+	host := system.GetHostname()
 
 	// we want to normallize the hostname,
 	// only the first part
