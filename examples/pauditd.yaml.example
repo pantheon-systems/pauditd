@@ -124,6 +124,14 @@ log:
   # See also: https://golang.org/pkg/log/#pkg-constants
   flags: 0
 
+// This allows for configuration of specific options
+// related to the notification-service-tranformer.
+notification-service-transformer:
+  // enables extra attributes to be added to the message
+  // sent to the notification service
+  extra_attributes:
+    ip_address: 192.168.0.5
+
 # metrics configuration currently only supports statsd
 metrics:
   # if metrics are disabled then they are not sent

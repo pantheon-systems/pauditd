@@ -113,6 +113,8 @@ type notification struct {
 
 The service expects this as a POST and as json. The data field is the []byte message value from pauditd. This could be used to send to any message bus as the proxy allows for a single service contract without care for the end destination.
 
+This can be configured to attach additional data into the attributes map[string]string. These extra attributes are set in the configuration file under notification-service-transformer top level configuration.
+
 #### Adding a tranformer for the http writer
 
 To send messages to a web service that requires a DTO/Service Contract that does not match the structure of the messages as they come from pauditd you will need to implement a `ResponseBodyTransformer`. This interface contains a single function to Transform the body of the http request to the service into the structure required. It is passed a []byte which are the bytes from pauditd representing the message and a uuid which is the trace id for the message and request going out to the service.

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pantheon-systems/pauditd/pkg/system"
+	"github.com/spf13/viper"
 	"os"
 	"regexp"
 	"strings"
@@ -19,6 +20,7 @@ import (
 type NotificationServiceTransformer struct {
 	hostname        string
 	noTopicToStdOut bool
+	extraAttr       map[string]string
 }
 
 type notification struct {
@@ -31,10 +33,17 @@ type notification struct {
 var ruleKeyRegex = regexp.MustCompile(`"rule_key":"(.*)"`)
 
 func init() {
-	Register("notification-service", NotificationServiceTransformer{
+	Register("notification-service", NewNotificationServiceTransformer)
+}
+
+// NewNotificationServiceTransformer creates new transformer
+func NewNotificationServiceTransformer(config *viper.Viper) ResponseBodyTransformer {
+	extraAttr := config.GetStringMapString("output.notification-service-transformer.extra_attributes")
+	return &NotificationServiceTransformer{
 		hostname:        getHostname(),
 		noTopicToStdOut: false,
-	})
+		extraAttr:       extraAttr,
+	}
 }
 
 // Transform takes the body and wraps the notification service structure around it
@@ -68,17 +77,23 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 		return nil, err
 	}
 
+	attributes := make(map[string]string)
+	// if extraAttr contains value
+	if len(t.extraAttr) > 0 {
+		attributes = t.extraAttr
+	}
+
+	attributes["hostname"] = t.hostname
+	attributes["trace_id"] = traceID.String()
+
 	// we remove the last char of the body, the code that creates the
 	// body is in the marsharller which adds a newline at the end of the
 	// message. This works for all the other output methods but not this one
 	notif := notification{
-		Topic: matches[1],
-		Data:  jsonBody,
-		Attributes: map[string]string{
-			"hostname": t.hostname,
-			"trace_id": traceID.String(),
-		},
-		Version: "1.0.0",
+		Topic:      matches[1],
+		Data:       jsonBody,
+		Attributes: attributes,
+		Version:    "1.0.0",
 	}
 
 	transformedBody, err := json.Marshal(notif)

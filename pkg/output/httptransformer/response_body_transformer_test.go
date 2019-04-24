@@ -1,6 +1,7 @@
 package httptransformer
 
 import (
+	"github.com/spf13/viper"
 	"testing"
 
 	"github.com/satori/go.uuid"
@@ -9,12 +10,16 @@ import (
 
 type TestRegisterTransformer struct{}
 
+func NewTestRegisterTransformer(config *viper.Viper) ResponseBodyTransformer {
+	return &TestRegisterTransformer{}
+}
+
 func (t TestRegisterTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
 	return nil, nil
 }
 
 func TestResponseBodyTransformerRegisterAndDefault(t *testing.T) {
-	Register("test", TestRegisterTransformer{})
+	Register("test", NewTestRegisterTransformer)
 
 	_, ok := transformers["test"]
 	assert.True(t, ok)
@@ -24,14 +29,15 @@ func TestResponseBodyTransformerRegisterAndDefault(t *testing.T) {
 }
 
 func TestResponseBodyTransformGetResponseBodyTransformer(t *testing.T) {
-	Register("test2", TestRegisterTransformer{})
+	config := viper.New()
+	Register("test2", NewTestRegisterTransformer)
 
-	transformer := GetResponseBodyTransformer("test2")
-	assert.IsType(t, TestRegisterTransformer{}, transformer)
+	transformer := GetResponseBodyTransformer("test2", config)
+	assert.IsType(t, &TestRegisterTransformer{}, transformer)
 
 	// with empty string we get default
-	transformer = GetResponseBodyTransformer("")
-	assert.IsType(t, NoopTransformer{}, transformer)
+	transformer = GetResponseBodyTransformer("", config)
+	assert.IsType(t, &NoopTransformer{}, transformer)
 }
 
 func TestNoopTransformerTransform(t *testing.T) {

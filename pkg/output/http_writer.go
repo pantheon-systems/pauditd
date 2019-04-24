@@ -174,13 +174,13 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	wg.Add(writerConfig.workerCount)
 
 	writer := &HTTPWriter{
-		url:      writerConfig.serviceURL,
-		messages: queue,
-		client:   httpClient,
-		wg:       wg,
-		ResponseBodyTransformer: httptransformer.GetResponseBodyTransformer(writerConfig.respBodyTransName),
-		debug:           writerConfig.debug,
-		traceHeaderName: writerConfig.traceHeaderName,
+		url:                     writerConfig.serviceURL,
+		messages:                queue,
+		client:                  httpClient,
+		wg:                      wg,
+		ResponseBodyTransformer: httptransformer.GetResponseBodyTransformer(writerConfig.respBodyTransName, config),
+		debug:                   writerConfig.debug,
+		traceHeaderName:         writerConfig.traceHeaderName,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {

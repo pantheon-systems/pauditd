@@ -2,6 +2,7 @@ package httptransformer
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"testing"
@@ -83,4 +84,29 @@ func TestNotificationServiceTransformerTransformNoRuleKeyStdout(t *testing.T) {
 	assert.Equal(t, bodyOrig, out)
 	assert.Nil(t, resultBody)
 	assert.Nil(t, err)
+}
+func TestNotificationServiceTransformer_ExtraAttributes(t *testing.T) {
+	extraAttributes := map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+	}
+
+	traceID, _ := uuid.FromString("cd4702b3-4763-11e8-917a-0242ac110002")
+	body := []byte("{\"sequence\":880575,\"timestamp\":\"1524242704.387\",\"messages\":[{\"type\":1300,\"data\":\"arch=c000003e syscall=2 success=yes exit=3 a0=2201ca0 a1=c2 a2=1b6 a3=fffffffffffffcd7 items=2 ppid=9976 pid=9977 auid=4294967295 uid=10005 gid=10005 euid=10005 suid=10005 fsuid=10005 egid=10005 sgid=10005 fsgid=10005 tty=(none) ses=4294967295 comm=\\\"git\\\" exe=\\\"/usr/bin/git\\\" key=\\\"binding-file-ops\\\"\"},{\"type\":1307,\"data\":\"cwd=\\\"/srv/bindings/228d4775d2df4fc18f25a7f49b956dc8/code\\\"\"},{\"type\":1302,\"data\":\"item=0 name=\\\"/srv/bindings/228d4775d2df4fc18f25a7f49b956dc8/code/.git/\\\" inode=3411559 dev=ca:41 mode=040755 ouid=10005 ogid=10005 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0\"},{\"type\":1302,\"data\":\"item=1 name=\\\"/srv/bindings/228d4775d2df4fc18f25a7f49b956dc8/code/.git/index.lock\\\" inode=3411349 dev=ca:41 mode=0100644 ouid=10005 ogid=10005 rdev=00:00 nametype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0\"},{\"type\":1327,\"data\":\"proctitle=67697400616464002D41002E\"}],\"uid_map\":{\"10005\":\"228d4775d2df4fc18f25a7f49b956dc8\",\"4294967295\":\"UNKNOWN_USER\"},\"rule_key\":\"binding-file-ops\"}\n")
+
+	transformer := NotificationServiceTransformer{
+		hostname:        "test-hostname",
+		noTopicToStdOut: true,
+		extraAttr:       extraAttributes,
+	}
+
+	resultBody, err := transformer.Transform(traceID, body)
+	notifResult := &notification{}
+	json.Unmarshal(resultBody, &notifResult)
+
+	assert.Nil(t, err)
+	assert.Contains(t, notifResult.Attributes, "key1")
+	assert.Contains(t, notifResult.Attributes, "key2")
+	assert.Equal(t, "value1", notifResult.Attributes["key1"])
+	assert.Equal(t, "value2", notifResult.Attributes["key2"])
 }
