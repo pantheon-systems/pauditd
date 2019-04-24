@@ -19,11 +19,9 @@ IMAGE		 ?= $(REGISTRY)/$(APP):$(BUILD_NUM)
 build: build-linux
 
 build-linux:
-	dep ensure
 	GOOS=linux GOARCH=amd64 go build
 
 test:
-	dep ensure
 	go test $$(go list ./...)
 
 test-cov-html:
