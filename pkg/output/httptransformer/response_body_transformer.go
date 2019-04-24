@@ -1,6 +1,9 @@
 package httptransformer
 
-import "github.com/satori/go.uuid"
+import (
+	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
+)
 
 // ResponseBodyTransformer is an interface that allows different
 // preparations to happen on the body of the message before
@@ -11,30 +14,37 @@ type ResponseBodyTransformer interface {
 	Transform(uuid.UUID, []byte) ([]byte, error)
 }
 
-var transformers = map[string]ResponseBodyTransformer{}
+type tansformerConstructor func(*viper.Viper) ResponseBodyTransformer
+
+var transformers = map[string]tansformerConstructor{}
 
 func init() {
-	Register("noop", NoopTransformer{})
+	Register("noop", NewNoopTransformer)
 }
 
 // Register saves a name and trasformer pair for use with the factory
-func Register(name string, transformer ResponseBodyTransformer) {
+func Register(name string, transformer func(*viper.Viper) ResponseBodyTransformer) {
 	transformers[name] = transformer
 }
 
 // GetResponseBodyTransformer returns a transformer by name
-func GetResponseBodyTransformer(name string) ResponseBodyTransformer {
+func GetResponseBodyTransformer(name string, config *viper.Viper) ResponseBodyTransformer {
 	if name == "" {
 		// noop is the default transformer
 		name = "noop"
 	}
 
-	return transformers[name]
+	return transformers[name](config)
 }
 
 // NoopTransformer is the concrete type for ResponseBodyTransformer that
 // does nothing (DEFUALT)
 type NoopTransformer struct{}
+
+// NewNoopTransformer creates new transformer that does nothing
+func NewNoopTransformer(config *viper.Viper) ResponseBodyTransformer {
+	return &NoopTransformer{}
+}
 
 // Transform is a noop for the NoopTransformer
 func (t NoopTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
