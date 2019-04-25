@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	hostnameEnv string = "NODENAME"
+	hostnameEnv string = "HOSTNAME"
 )
 
 // GetHostname retrieves the hostname of the system, if no hostname
