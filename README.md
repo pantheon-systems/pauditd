@@ -113,7 +113,7 @@ type notification struct {
 
 The service expects this as a POST and as json. The data field is the []byte message value from pauditd. This could be used to send to any message bus as the proxy allows for a single service contract without care for the end destination.
 
-This can be configured to attach additional data into the attributes map[string]string. These extra attributes are set in the configuration file under notification-service-transformer top level configuration.
+This can be configured to attach additional data into the attributes map[string]string. These extra attributes are set in the configuration file under output.notification_service_transformer top level configuration.
 
 #### Adding a tranformer for the http writer
 
@@ -136,7 +136,7 @@ type ResponseBodyTransformer interface {
 
 ### Dropped Messages by the Kernel
 
-If you are seeing `Error during message receive: no buffer space available` in the logs or seeing dropped messages 
+If you are seeing `Error during message receive: no buffer space available` in the logs or seeing dropped messages
 in the metrics. This is because `pauditd` is not receiving data as quickly as your system is generating it. You can increase
 the receive buffer system wide and maybe it will help. You can also increase your `rmem-max` kernel tunable to allow netlink
 socket buffers to be larger. This will not increase the other netlink sockets (TCP) just the ones that the operator configures
