@@ -1,9 +1,10 @@
 package system_test
 
 import (
-	"github.com/pantheon-systems/pauditd/pkg/system"
 	"os"
 	"testing"
+
+	"github.com/pantheon-systems/pauditd/pkg/system"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +12,7 @@ import (
 func Test_GetHostnameWithEnvVar(t *testing.T) {
 	testName := "test-node-name"
 
-	os.Setenv("NODENAME", testName)
+	os.Setenv("HOSTNAME", testName)
 
 	hostname := system.GetHostname()
 
