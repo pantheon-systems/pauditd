@@ -3,11 +3,12 @@ package httptransformer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pantheon-systems/pauditd/pkg/system"
-	"github.com/spf13/viper"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/pantheon-systems/pauditd/pkg/system"
+	"github.com/spf13/viper"
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
@@ -38,7 +39,7 @@ func init() {
 
 // NewNotificationServiceTransformer creates new transformer
 func NewNotificationServiceTransformer(config *viper.Viper) ResponseBodyTransformer {
-	extraAttr := config.GetStringMapString("output.notification-service-transformer.extra_attributes")
+	extraAttr := config.GetStringMapString("output.notification_service_transformer.extra_attributes")
 	return &NotificationServiceTransformer{
 		hostname:        getHostname(),
 		noTopicToStdOut: false,
