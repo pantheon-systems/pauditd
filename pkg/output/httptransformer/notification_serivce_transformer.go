@@ -39,7 +39,8 @@ func init() {
 
 // NewNotificationServiceTransformer creates new transformer
 func NewNotificationServiceTransformer(config *viper.Viper) ResponseBodyTransformer {
-	extraAttr := config.GetStringMapString("output.notification_service_transformer.extra_attributes")
+	extraAttr := config.GetStringMapString("output.http.notification_service_transformer.extra_attributes")
+
 	return &NotificationServiceTransformer{
 		hostname:        getHostname(),
 		noTopicToStdOut: false,
