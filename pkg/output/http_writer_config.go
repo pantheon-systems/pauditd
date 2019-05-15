@@ -1,12 +1,16 @@
 package output
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"strconv"
 
+	"github.com/cloudflare/certinel"
+	"github.com/cloudflare/certinel/fswatcher"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 )
 
@@ -56,11 +60,18 @@ func (c config) String() string {
 		c.caCertPath)
 }
 
-func (c config) createTLSConfig() (*tls.Config, error) {
-	cert, err := tls.LoadX509KeyPair(c.clientCertPath, c.clientKeyPath)
+func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) {
+	watcher, err := fswatcher.New(c.clientCertPath, c.clientKeyPath)
 	if err != nil {
 		return nil, err
 	}
+
+	sentinel := certinel.New(watcher, func(err error) {
+		slog.Error.Printf("Failed to rotate http writer certificates for TLS: %s", err)
+		cancel()
+	})
+
+	sentinel.Watch()
 
 	var caCerts *x509.CertPool
 	caCerts = x509.NewCertPool()
@@ -71,8 +82,8 @@ func (c config) createTLSConfig() (*tls.Config, error) {
 	}
 
 	return &tls.Config{
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      caCerts,
+		GetClientCertificate: sentinel.GetClientCertificate,
+		RootCAs:              caCerts,
 	}, nil
 }
 
