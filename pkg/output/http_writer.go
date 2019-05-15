@@ -16,7 +16,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"
-	"gopkg.in/alexcesaro/statsd.v2"
+	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
 // HTTPWriter is the class that encapsulates the http output plugin
@@ -138,9 +138,23 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		slog.Info.Print(writerConfig)
 	}
 
+	queue := make(chan *messageTransport, writerConfig.bufferSize)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+	go func() {
+		select {
+		case <-signals:
+			close(queue)
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	transport := &http.Transport{}
 	if writerConfig.sslEnabled {
-		tlsConfig, err := writerConfig.createTLSConfig()
+		tlsConfig, err := writerConfig.createTLSConfig(cancel)
 		if err != nil {
 			return nil, err
 		}
@@ -156,31 +170,17 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		Transport: breakerTransport,
 	}
 
-	queue := make(chan *messageTransport, writerConfig.bufferSize)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-	go func() {
-		select {
-		case <-signals:
-			close(queue)
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-
 	wg := &sync.WaitGroup{}
 	wg.Add(writerConfig.workerCount)
 
 	writer := &HTTPWriter{
-		url:                     writerConfig.serviceURL,
-		messages:                queue,
-		client:                  httpClient,
-		wg:                      wg,
+		url:      writerConfig.serviceURL,
+		messages: queue,
+		client:   httpClient,
+		wg:       wg,
 		ResponseBodyTransformer: httptransformer.GetResponseBodyTransformer(writerConfig.respBodyTransName, config),
-		debug:                   writerConfig.debug,
-		traceHeaderName:         writerConfig.traceHeaderName,
+		debug:           writerConfig.debug,
+		traceHeaderName: writerConfig.traceHeaderName,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {
