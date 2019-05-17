@@ -8,8 +8,8 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	"github.com/cloudflare/certinel"
-	"github.com/cloudflare/certinel/fswatcher"
+	"github.com/pantheon-systems/certinel"
+	"github.com/pantheon-systems/certinel/fswatcher"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 )
@@ -66,7 +66,7 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 		return nil, err
 	}
 
-	sentinel := certinel.New(watcher, func(err error) {
+	sentinel := certinel.New(watcher, slog.Info, func(err error) {
 		slog.Error.Printf("Failed to rotate http writer certificates for TLS: %s", err)
 		cancel()
 	})
