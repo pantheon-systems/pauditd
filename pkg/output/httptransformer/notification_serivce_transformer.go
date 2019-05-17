@@ -13,7 +13,7 @@ import (
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // NotificationServiceTransformer transforms the body of an HTTP Writer and handles the logic
@@ -79,14 +79,17 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 		return nil, err
 	}
 
-	attributes := make(map[string]string)
-	// if extraAttr contains value
-	if len(t.extraAttr) > 0 {
-		attributes = t.extraAttr
+	attributes := map[string]string{
+		"hostname": t.hostname,
+		"trace_id": traceID.String(),
 	}
 
-	attributes["hostname"] = t.hostname
-	attributes["trace_id"] = traceID.String()
+	// if extraAttr contains value
+	if len(t.extraAttr) > 0 {
+		for key, value := range t.extraAttr {
+			attributes[key] = value
+		}
+	}
 
 	// we remove the last char of the body, the code that creates the
 	// body is in the marsharller which adds a newline at the end of the
