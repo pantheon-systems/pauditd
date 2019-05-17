@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strconv"
+	"time"
 
 	"github.com/pantheon-systems/certinel"
-	"github.com/pantheon-systems/certinel/fswatcher"
+	"github.com/pantheon-systems/certinel/pollwatcher"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 )
@@ -18,6 +19,7 @@ const (
 	defaultBufferSize          = 100
 	defaultWorkerCount         = 10
 	defaultBreakerFailureRatio = 0.05
+	defaultCertRefreshInterval = 60 * time.Second
 )
 
 type config struct {
@@ -61,10 +63,7 @@ func (c config) String() string {
 }
 
 func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) {
-	watcher, err := fswatcher.New(c.clientCertPath, c.clientKeyPath)
-	if err != nil {
-		return nil, err
-	}
+	watcher := pollwatcher.New(c.clientCertPath, c.clientKeyPath, defaultCertRefreshInterval)
 
 	sentinel := certinel.New(watcher, slog.Info, func(err error) {
 		slog.Error.Printf("Failed to rotate http writer certificates for TLS: %s", err)
