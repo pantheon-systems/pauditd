@@ -20,6 +20,7 @@ const (
 	defaultWorkerCount         = 10
 	defaultBreakerFailureRatio = 0.05
 	defaultCertRefreshInterval = 60 * time.Second
+	defaultIdleConnTimeout     = 10 * time.Second
 )
 
 type config struct {
@@ -30,6 +31,7 @@ type config struct {
 	workerCount       int
 	serviceURL        string
 	attempts          int
+	idleConnTimeout   time.Duration
 	debug             bool
 
 	sslEnabled     bool
@@ -46,6 +48,7 @@ func (c config) String() string {
 		buffer_size: %d
 		breaker_failure_ratio %f
 		response_body_transformer: %s
+		idle_conn_timeout: %s,
 		ssl: %s
 		ssl.client_cert: %s
 		ssl.client_key: %s
@@ -56,6 +59,7 @@ func (c config) String() string {
 		c.bufferSize,
 		c.failureRatio,
 		c.respBodyTransName,
+		c.idleConnTimeout,
 		strconv.FormatBool(c.sslEnabled),
 		c.clientCertPath,
 		c.clientKeyPath,
@@ -142,6 +146,11 @@ func newHTTPWriterConfig(viperConfig *viper.Viper) (*config, error) {
 		if c.clientCertPath == "" || c.clientKeyPath == "" || c.caCertPath == "" {
 			return nil, fmt.Errorf("SSL is enabled, please specify the required certificates (client_cert, client_key, ca_cert)")
 		}
+	}
+
+	c.idleConnTimeout = defaultIdleConnTimeout
+	if viperConfig.IsSet("output.http.idle_conn_timeout") {
+		c.idleConnTimeout = viperConfig.GetDuration("output.http.idle_conn_timeout")
 	}
 
 	return c, nil
