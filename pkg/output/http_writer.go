@@ -13,7 +13,7 @@ import (
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
@@ -152,7 +152,9 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		}
 	}()
 
-	transport := &http.Transport{}
+	transport := &http.Transport{
+		IdleConnTimeout: writerConfig.idleConnTimeout,
+	}
 	if writerConfig.sslEnabled {
 		tlsConfig, err := writerConfig.createTLSConfig(cancel)
 		if err != nil {
@@ -174,13 +176,13 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	wg.Add(writerConfig.workerCount)
 
 	writer := &HTTPWriter{
-		url:      writerConfig.serviceURL,
-		messages: queue,
-		client:   httpClient,
-		wg:       wg,
+		url:                     writerConfig.serviceURL,
+		messages:                queue,
+		client:                  httpClient,
+		wg:                      wg,
 		ResponseBodyTransformer: httptransformer.GetResponseBodyTransformer(writerConfig.respBodyTransName, config),
-		debug:           writerConfig.debug,
-		traceHeaderName: writerConfig.traceHeaderName,
+		debug:                   writerConfig.debug,
+		traceHeaderName:         writerConfig.traceHeaderName,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {
