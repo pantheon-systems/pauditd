@@ -2,6 +2,7 @@ package marshaller
 
 import (
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
@@ -102,6 +103,12 @@ func (a *AuditMarshaller) completeMessage(seq int) {
 	if msg, ok = a.msgs[seq]; !ok {
 		//TODO: attempted to complete a missing message, log?
 		return
+	}
+
+	// The message has more than one audit rule keys associated with it
+	// this means we need to duplicate the message in the pipeline for processing
+	if strings.ContainsAny(msg.RuleKey, "\x01") {
+		slog.Info("Found a rule key with more than one value: %s", msg.RuleKey)
 	}
 
 	if a.dropMessage(msg) {

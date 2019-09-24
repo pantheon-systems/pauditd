@@ -2,6 +2,7 @@ package parser
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
@@ -175,7 +176,14 @@ func (amg *AuditMessageGroup) mapUids(am *AuditMessage) {
 
 func (amg *AuditMessageGroup) findRuleKey(am *AuditMessage) {
 	ruleKey := amg.findDataField("key", MAX_AUDIT_RULE_KEY_LENGTH, am.Data)
+
 	amg.RuleKey = strings.Replace(ruleKey, "\"", "", -1)
+	// check to see if its hex, when there is more than one rule key for a rule
+	// some versions of the kernel send the value key=<giant hex value>
+	decoded, err := hex.DecodeString(ruleKey)
+	if err == nil {
+		amg.RuleKey = fmt.Sprintf("%s", decoded)
+	}
 }
 
 func (amg *AuditMessageGroup) findSyscall(am *AuditMessage) {
