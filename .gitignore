@@ -9,3 +9,4 @@ pauditd.yaml
 node_modules
 vendor/
 .vscode
+.idea
