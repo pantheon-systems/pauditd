@@ -2,7 +2,6 @@ package marshaller
 
 import (
 	"os"
-	"strings"
 	"syscall"
 	"time"
 
@@ -105,26 +104,16 @@ func (a *AuditMarshaller) completeMessage(seq int) {
 		return
 	}
 
-	// The message has more than one audit rule keys associated with it
-	// this means we need to duplicate the message in the pipeline for processing
-    var keys []string{msg.RuleKey}
-	if strings.ContainsAny(msg.RuleKey, "\u0001") {
-        keys = strings.Split(msg.RuleKey, "\u0001")
+	if a.dropMessage(msg) {
+		metric.GetClient().Increment("messages.filtered")
+		delete(a.msgs, seq)
+		return
 	}
 
-    for key := range keys {
-        msg.RuleKey = key
-	    if a.dropMessage(msg) {
-		    metric.GetClient().Increment("messages.filtered")
-		    delete(a.msgs, seq)
-		    return
-    	}
-
-	    if err := a.writer.Write(msg); err != nil {
-		    slog.Error.Println("Failed to write message. Error:", err)
-	    	os.Exit(1)
-	    }
-    }
+	if err := a.writer.Write(msg); err != nil {
+		slog.Error.Println("Failed to write message. Error:", err)
+		os.Exit(1)
+	}
 
 	delete(a.msgs, seq)
 }
@@ -161,19 +150,39 @@ func (a *AuditMarshaller) filterSyscallMessageType(msg *parser.AuditMessageGroup
 }
 
 func (a *AuditMarshaller) filterRuleKey(msgGroup *parser.AuditMessageGroup) FilterAction {
-	// rule key filters are indexed in at 0 as we dont use the message type
-	ruleKeyFilters, hasRuleKey := a.filters[msgGroup.RuleKey][0]
+	// we have one or more rule keys per message. We will remove the rule key if it is
+	// dropped, if there are no rule keys left at the end we drop the whole message.
 
-	if !hasRuleKey {
-		// no filter found for rule key move on (fast path)
-		return Keep
+	retVal := Drop
+	keepKeys = []string{}
+	for _, ruleKey := range msgGroup.RuleKeys {
+		// rule key filters are indexed in at 0 as we dont use the message type
+		ruleKeyFilters, hasRuleKey := a.filters[ruleKey][0]
+
+		if !hasRuleKey {
+			// no filter found for rule key move on (fast path)
+			continue
+		}
+
+		fullMessage := ""
+		for _, msg := range msgGroup.Msgs {
+			fullMessage += msg.Data
+		}
+
+		if runFilters(ruleKeyFilters, msg) == Drop {
+			continue
+		}
+
+		keepKeys = append(keepKeys, key)
+		retVal = Keep
 	}
 
-	fullMessage := ""
-	for _, msg := range msgGroup.Msgs {
-		fullMessage += msg.Data
-	}
+	msgGroup.RuleKeys = keepKeys
 
+	return retVal
+}
+
+func runFilters(filters []*AuditFilter, msg string) {
 	// for this each rule is evaluated against all the messages before moving on
 	// to the next rule
 	for _, filter := range ruleKeyFilters {
@@ -182,7 +191,6 @@ func (a *AuditMarshaller) filterRuleKey(msgGroup *parser.AuditMessageGroup) Filt
 		}
 	}
 
-	// default
 	return Keep
 }
 

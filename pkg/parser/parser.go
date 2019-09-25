@@ -58,7 +58,7 @@ type AuditMessageGroup struct {
 	Msgs          []*AuditMessage   `json:"messages"`
 	UidMap        map[string]string `json:"uid_map"`
 	Syscall       string            `json:"-"`
-	RuleKey       string            `json:"rule_key"`
+	RuleKeys      []string          `json:"rule_keys"`
 }
 
 // Creates a new message group from the details parsed from the message
@@ -70,6 +70,7 @@ func NewAuditMessageGroup(am *AuditMessage) *AuditMessageGroup {
 		CompleteAfter: time.Now().Add(COMPLETE_AFTER),
 		UidMap:        make(map[string]string, 2), // Usually only 2 individual uids per execve
 		Msgs:          make([]*AuditMessage, 0, 6),
+		RuleKeys:      make([]string),
 	}
 
 	amg.AddMessage(am)
@@ -177,12 +178,20 @@ func (amg *AuditMessageGroup) mapUids(am *AuditMessage) {
 func (amg *AuditMessageGroup) findRuleKey(am *AuditMessage) {
 	ruleKey := amg.findDataField("key", MAX_AUDIT_RULE_KEY_LENGTH, am.Data)
 
-	amg.RuleKey = strings.Replace(ruleKey, "\"", "", -1)
-	// check to see if its hex, when there is more than one rule key for a rule
-	// some versions of the kernel send the value key=<giant hex value>
-	decoded, err := hex.DecodeString(ruleKey)
-	if err == nil {
-		amg.RuleKey = fmt.Sprintf("%s", decoded)
+	// when multiple rule keys are specified they are seperated by the
+	// unicode charicter \u0001 (\x01) and are encoded in hex which needs to
+	// be converted to ascii
+	if strings.ContainsAny(msg.RuleKey, "\x01") {
+		metric.GetClient().Increment("messages.multikey")
+		decoded, err := hex.DecodeString(ruleKey)
+		if err == nil {
+			ruleKey = fmt.Sprintf("%s", decoded)
+		}
+		keys = strings.Split(ruleKey, "\u0001")
+	}
+
+	for key := range keys {
+		amg.RuleKeys = append(amg.RuleKeys, strings.Replace(key, "\"", "", -1))
 	}
 }
 
