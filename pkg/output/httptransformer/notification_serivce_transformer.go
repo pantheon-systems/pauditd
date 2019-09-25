@@ -49,7 +49,9 @@ func NewNotificationServiceTransformer(config *viper.Viper) ResponseBodyTransfor
 }
 
 // Transform takes the body and wraps the notification service structure around it
-func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
+// it can return more than one byte array which would be multiple bodies (then the system will do more than
+// one request)
+func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte) ([][]byte, error) {
 	var err error
 
 	matches := ruleKeyRegex.FindStringSubmatch(string(body))

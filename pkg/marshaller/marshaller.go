@@ -170,6 +170,7 @@ func (a *AuditMarshaller) filterRuleKey(msgGroup *parser.AuditMessageGroup) Filt
 		}
 
 		if runFilters(ruleKeyFilters, msg) == Drop {
+			metric.GetClient().Increment("messages.keys.filtered")
 			continue
 		}
 
