@@ -107,20 +107,24 @@ func (a *AuditMarshaller) completeMessage(seq int) {
 
 	// The message has more than one audit rule keys associated with it
 	// this means we need to duplicate the message in the pipeline for processing
-	if strings.ContainsAny(msg.RuleKey, "\x01") {
-		slog.Info("Found a rule key with more than one value: %s", msg.RuleKey)
+    var keys []string{msg.RuleKey}
+	if strings.ContainsAny(msg.RuleKey, "\u0001") {
+        keys = strings.Split(msg.RuleKey, "\u0001")
 	}
 
-	if a.dropMessage(msg) {
-		metric.GetClient().Increment("messages.filtered")
-		delete(a.msgs, seq)
-		return
-	}
+    for key := range keys {
+        msg.RuleKey = key
+	    if a.dropMessage(msg) {
+		    metric.GetClient().Increment("messages.filtered")
+		    delete(a.msgs, seq)
+		    return
+    	}
 
-	if err := a.writer.Write(msg); err != nil {
-		slog.Error.Println("Failed to write message. Error:", err)
-		os.Exit(1)
-	}
+	    if err := a.writer.Write(msg); err != nil {
+		    slog.Error.Println("Failed to write message. Error:", err)
+	    	os.Exit(1)
+	    }
+    }
 
 	delete(a.msgs, seq)
 }
