@@ -33,13 +33,13 @@ nfpm:
   homepage: "https://github.com/pantheon-systems/pauditd"
   maintainer: engineering <engineering@pantheon.io>
   description: "go alternative to auditd"
-  release: {{ .Tag }}
   license: MIT
   formats:
     - rpm
   overrides:
     rpm:
       name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
+      release: {{ .Tag }}
       replacements:
         amd64: x86_64
 
