@@ -32,7 +32,6 @@ changelog:
       - Merge pull request
       - Merge branch
 
-## generate RPM and DEB packages
 nfpms:
   -
     formats:
