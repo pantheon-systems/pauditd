@@ -66,7 +66,7 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 	// This is to monitor other topics, we are getting some strange topic names
 	// which this is going to be used to debug. SHOULD BE REMOVED WHEN COMPLETE
 	if matches[1] != "binding-file-ops" {
-		slog.Error.Printf("{topic: \"%s\",msg: \"%s\"}", matches[1], string(body))
+		slog.Error.Printf("{\"topic\": \"%s\", \"trace_id\": \"%s\", \"msg\": %s}", matches[1], traceID.String(), string(body))
 	}
 
 	metric.GetClient().Increment(fmt.Sprintf("notif-service-transformer.topic.%s", matches[1]))
