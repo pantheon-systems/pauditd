@@ -46,7 +46,8 @@ nfpm:
 dockers:
   -
     dockerfile: Dockerfile
-    binary: pauditd
+    binaries: 
+    - pauditd
     goos: linux
     goarch: amd64
     image_templates:
