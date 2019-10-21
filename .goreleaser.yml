@@ -52,7 +52,7 @@ nfpms:
 dockers:
   -
     dockerfile: Dockerfile
-    binaries: 
+    binaries:
     - pauditd
     goos: linux
     goarch: amd64
