@@ -48,6 +48,9 @@ push-circle: setup-quay
 push:
 	docker push $(IMAGE)
 
+snapshot:
+	goreleaser --snapshot --rm-dist --debug
+
 setup-quay:: ## setup docker login for quay.io
 ifdef CIRCLE_BUILD_NUM
 	@$(QUAY) > /dev/null
