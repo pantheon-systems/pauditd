@@ -94,6 +94,7 @@ func TestNewNetlinkClient(t *testing.T) {
 	defer resetLogger()
 
 	n, err := NewNetlinkClient(1024)
+	n.Close()
 
 	assert.Nil(t, err)
 	if n == nil {
