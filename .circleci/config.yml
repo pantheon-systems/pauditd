@@ -31,7 +31,8 @@ jobs:
             xargs curl -o ~/autotag -L \
             && chmod 755 ~/autotag
       - run: ~/autotag
-      - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+      #- run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+      - run: curl -sL https://git.io/goreleaser | VERSION=v0.119.0 bash -s -- --parallelism=2
       - store_artifacts:
           path: /home/circleci/pauditd/dist
       - persist_to_workspace:
