@@ -38,10 +38,11 @@ type AuditStatusPayload struct {
 type NetlinkPacket syscall.NlMsghdr
 
 type NetlinkClient struct {
-	fd      int
-	address syscall.Sockaddr
-	seq     uint32
-	buf     []byte
+	fd                   int
+	address              syscall.Sockaddr
+	seq                  uint32
+	buf                  []byte
+	cancelKeepConnection chan struct{}
 }
 
 // NewNetlinkClient creates a new NetLinkClient and optionally tries to modify the netlink recv buffer
@@ -52,9 +53,10 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	}
 
 	n := &NetlinkClient{
-		fd:      fd,
-		address: &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: 0, Pid: 0},
-		buf:     make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
+		fd:                   fd,
+		address:              &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: 0, Pid: 0},
+		buf:                  make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
+		cancelKeepConnection: make(chan struct{}),
 	}
 
 	if err = syscall.Bind(fd, n.address); err != nil {
@@ -76,8 +78,13 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 
 	go func() {
 		for {
-			n.KeepConnection()
-			time.Sleep(time.Second * 5)
+			select {
+			case <-n.cancelKeepConnection:
+				return
+			default:
+				n.KeepConnection()
+				time.Sleep(time.Second * 5)
+			}
 		}
 	}()
 
@@ -155,4 +162,9 @@ func (n *NetlinkClient) KeepConnection() {
 	if err != nil {
 		slog.Error.Println("Error occurred while trying to keep the connection:", err)
 	}
+}
+
+// Close will stop running goroutines
+func (n *NetlinkClient) Close() {
+	close(n.cancelKeepConnection)
 }

@@ -22,7 +22,7 @@ build-linux:
 	GOOS=linux GOARCH=amd64 go build
 
 test:
-	go test $$(go list ./...)
+	go test $$(go list ./...) -race
 
 test-cov-html:
 	go test -coverprofile=coverage.out
