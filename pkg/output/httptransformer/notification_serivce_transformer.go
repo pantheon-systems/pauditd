@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -61,12 +60,6 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 		}
 		metric.GetClient().Increment("notif-service-transformer.topic.no-topic")
 		return nil, err
-	}
-
-	// This is to monitor other topics, we are getting some strange topic names
-	// which this is going to be used to debug. SHOULD BE REMOVED WHEN COMPLETE
-	if matches[1] != "binding-file-ops" {
-		slog.Error.Printf("{topic: \"%s\",msg: \"%s\"}", matches[1], string(body))
 	}
 
 	metric.GetClient().Increment(fmt.Sprintf("notif-service-transformer.topic.%s", matches[1]))
