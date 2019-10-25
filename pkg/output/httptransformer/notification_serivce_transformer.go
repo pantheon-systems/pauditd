@@ -63,12 +63,6 @@ func (t NotificationServiceTransformer) Transform(traceID uuid.UUID, body []byte
 		return nil, err
 	}
 
-	// This is to monitor other topics, we are getting some strange topic names
-	// which this is going to be used to debug. SHOULD BE REMOVED WHEN COMPLETE
-	if matches[1] != "binding-file-ops" {
-		slog.Error.Printf("{topic: \"%s\",msg: \"%s\"}", matches[1], string(body))
-	}
-
 	metric.GetClient().Increment(fmt.Sprintf("notif-service-transformer.topic.%s", matches[1]))
 
 	// removing the \n char at the end of the message, this is added by the
