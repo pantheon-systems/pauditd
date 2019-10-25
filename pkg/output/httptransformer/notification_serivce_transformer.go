@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 
 	uuid "github.com/satori/go.uuid"
 )
