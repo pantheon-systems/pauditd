@@ -60,7 +60,7 @@ The `pauditd` binary can be run in inside a docker container running on the serv
 
 To run with the docker command:
 
-```sh
+```console
     docker run -v <pathtoconfigfile>:/config --privileged --pid="host" quay.io/getpantheon/pauditd:latest
 ```
 
@@ -68,9 +68,10 @@ If you are monitoring the host file system with file system watch rules then you
 
 ### Example Config
 
-See [pauditd.yaml.example](pauditd.yaml.example)
+See [./examples/pauditd.yaml.example](./examples/pauditd.yaml.example)
 
 ### Metrics
+
 Metrics have been added and are provided by the statsd client. Statsd is the only supported metrics in pauditd at this time. The available metrics are as follows:
 
 - `pauditd.<hostname>.messages`
@@ -156,7 +157,7 @@ The kernel doesn't always know the filename for file access. Figuring out the fi
 
 You can map back to a filename, possibly not *the* filename, that triggured the audit line though.
 
-```sh
+```console
 sudo debugfs -R "ncheck <inode to map>" /dev/<your block device here>
 ```
 
@@ -168,7 +169,7 @@ Wikipedia has a pretty good [page](https://en.wikipedia.org/wiki/Syslog) on this
 
 This is likely because you are running `journald` which is also reading audit events. To disable it you need to disable the functionality in `journald`.
 
-```sh
+```console
 sudo systemctl mask systemd-journald-audit.socket
 ```
 
