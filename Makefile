@@ -19,7 +19,7 @@ IMAGE		 ?= $(REGISTRY)/$(APP):$(BUILD_NUM)
 build: build-linux
 
 build-linux:
-	GOOS=linux GOARCH=amd64 go build
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build
 
 test:
 	go test $$(go list ./...) -race
