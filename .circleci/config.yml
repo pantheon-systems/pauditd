@@ -32,7 +32,7 @@ jobs:
             xargs curl -o ~/autotag -L \
             && chmod 755 ~/autotag
       - run: ~/autotag
-      - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+      - run: VERSION=v0.135.0 curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
       - store_artifacts:
           path: /home/circleci/pauditd/dist
       - persist_to_workspace:
