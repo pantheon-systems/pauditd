@@ -43,7 +43,7 @@ nfpms:
     license: MIT
     overrides:
       rpm:
-        name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
+        file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
         replacements:
           amd64: x86_64
 
