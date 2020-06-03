@@ -3,7 +3,7 @@ project_name: pauditd
 builds:
 - binary: pauditd
   env:
-    - CGO_ENABLED=0
+    - CGO_ENABLED=1
   ldflags:
     - -s -w
   goos:
