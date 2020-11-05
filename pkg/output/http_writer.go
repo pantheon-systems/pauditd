@@ -28,6 +28,8 @@ type HTTPWriter struct {
 	ResponseBodyTransformer httptransformer.ResponseBodyTransformer
 	debug                   bool
 	traceHeaderName         string
+	workerShutdownSignals   chan struct{}
+	cancelFunc              context.CancelFunc
 }
 
 type messageTransport struct {
@@ -50,6 +52,7 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 			if !ok {
 				slog.Error.Printf("pkg: %v", r)
 			}
+			w.cancelFunc()
 			slog.Info.Println("Waiting for goroutines to complete")
 			w.wg.Wait()
 			slog.Info.Println("Goroutines completed")
@@ -79,7 +82,8 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 func (w *HTTPWriter) Process(ctx context.Context) {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-w.workerShutdownSignals:
+			fmt.Println("Worker shutting down!")
 			w.wg.Done()
 			return
 		case transport := <-w.messages:
@@ -140,16 +144,23 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	}
 
 	queue := make(chan *messageTransport, writerConfig.bufferSize)
+	workerShutdownSignals := make(chan struct{}, writerConfig.workerCount)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 	go func() {
 		select {
-		case <-signals:
+		case v := <-signals:
+			slog.Info.Printf("Received signal %v\n", v)
 			close(queue)
 			cancel()
 		case <-ctx.Done():
+			slog.Info.Println("cancel() called! Shutting down")
+		}
+		slog.Info.Printf("Shutting down %d workers...\n", writerConfig.workerCount)
+		for i := 0; i < writerConfig.workerCount; i++ {
+			workerShutdownSignals <- struct{}{}
 		}
 	}()
 
@@ -184,6 +195,8 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		ResponseBodyTransformer: httptransformer.GetResponseBodyTransformer(writerConfig.respBodyTransName, config),
 		debug:                   writerConfig.debug,
 		traceHeaderName:         writerConfig.traceHeaderName,
+		workerShutdownSignals:   workerShutdownSignals,
+		cancelFunc:              cancel,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {
