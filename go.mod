@@ -3,7 +3,7 @@ module github.com/pantheon-systems/pauditd
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
-	github.com/pantheon-systems/certinel v1.2.0
+	github.com/pantheon-systems/certinel v1.2.1
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/pflag v1.0.3 // indirect
