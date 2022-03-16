@@ -10,7 +10,7 @@ require (
 	github.com/spf13/viper v1.2.1
 	github.com/streadway/handy v0.0.0-20160402200321-f450267a206e
 	github.com/stretchr/objx v0.2.0 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	golang.org/x/sys v0.0.0-20181011152604-fa43e7bc11ba // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0
 )
