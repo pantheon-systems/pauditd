@@ -3,7 +3,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/golang:1.12
+      - image: cimg/go:1.18
     working_directory: /home/circleci/pauditd
     steps:
       - checkout
@@ -15,7 +15,7 @@ jobs:
 
   build-release:
     docker:
-      - image: circleci/golang:1.12
+      - image: cimg/go:1.18
     working_directory: /home/circleci/pauditd
     steps:
       - attach_workspace:
