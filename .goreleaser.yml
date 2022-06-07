@@ -41,6 +41,7 @@ nfpms:
     maintainer: engineering <engineering@pantheon.io>
     description: "go alternative to auditd"
     license: MIT
+    bindir: /usr/local/bin
     overrides:
       rpm:
         file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Timestamp }}-{{ .Arch }}"
