@@ -31,7 +31,7 @@ type AuditFilter struct {
 	Action      FilterAction
 }
 
-func NewAuditFilter(ruleNumber int, obj map[interface{}]interface{}) (*AuditFilter, error) {
+func NewAuditFilter(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
 	var err error
 
 	af, err := parse(ruleNumber, obj)
@@ -55,7 +55,7 @@ func NewAuditFilter(ruleNumber int, obj map[interface{}]interface{}) (*AuditFilt
 	return af, nil
 }
 
-func parse(ruleNumber int, obj map[interface{}]interface{}) (*AuditFilter, error) {
+func parse(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
 	var err error
 	var ok bool
 
