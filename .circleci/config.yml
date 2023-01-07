@@ -57,8 +57,13 @@ workflows:
   version: 2
   test-build-release:
     jobs:
-      - test
+      - test:
+          context:
+            - docker-executor-auth
       - build-release:
+          context:
+            - docker-executor-auth
+            - sig-go-release
           requires:
             - test
           filters:
