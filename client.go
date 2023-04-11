@@ -16,11 +16,11 @@ import (
 var Endianness = binary.LittleEndian
 
 const (
-	// MAX_AUDIT_MESSAGE_LENGTH see http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L398
-	MAX_AUDIT_MESSAGE_LENGTH = 8970
+	// MAX_AUDIT_MESSAGE_LENGTH see https://github.com/torvalds/linux/blob/master/include/uapi/linux/audit.h#L454
+	MAX_AUDIT_MESSAGE_LENGTH = 8560
 )
 
-//TODO: this should live in a marshaller
+// TODO: this should live in a marshaller
 type AuditStatusPayload struct {
 	Mask            uint32
 	Enabled         uint32
