@@ -6,6 +6,7 @@ socket_buffer:
   # Maximum max is net.core.rmem_max (/proc/sys/net/core/rmem_max)
   receive: 16384
 
+# Netlink message types and ranges https://github.com/torvalds/linux/blob/master/include/uapi/linux/audit.h#L31-L53
 events:
   # Minimum event type to capture, default 1300
   min: 1300
