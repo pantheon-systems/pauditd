@@ -68,11 +68,19 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 	}
 
 	bytesSent := len(p)
+	errCount := 0
 	select {
 	case w.messages <- transport:
+		errCount = 0
 	default:
 		slog.Error.Printf("Buffer full or closed, messages dropped")
 		metric.GetClient().Increment("http_writer.dropped_messages")
+
+		// Exit the pod if the error persists
+		if errCount > 10 {
+			os.Exit(1)
+		}
+		errCount++
 	}
 
 	return bytesSent, nil
