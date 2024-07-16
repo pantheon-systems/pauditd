@@ -177,20 +177,7 @@ func main() {
 	}
 
 	recvSize := 0
-	// Fetch the max value we can set from /proc/sys/net/core/rmem_max
-	// This value is mounted in from the host via the kube yaml
-	// Open the file
-	file, err := os.Open("/proc/sys/net/core/rmem_max")
-	if err != nil {
-		slog.Error.Fatal(fmt.Sprintf("Error opening rmem_max: [%v]", err))
-	}
-	defer file.Close()
-	// Read the value
-	var rmemMax int
-	_, err = fmt.Fscanf(file, "%d", &rmemMax)
-	if err != nil {
-		slog.Error.Fatal(fmt.Sprintf("Error reading the rmem_max value: [%v]", err))
-	}
+	rmemMax := fetchRmemMax()
 	// If the value is 0, use the default value from the config
 	recvSize = rmemMax
 	if rmemMax == 0 {
@@ -237,6 +224,23 @@ func main() {
 		// As soon as we have a message, spawn a goroutine to handle it and free up the main loop
 		go handleMsg(msg, marshaller)
 	}
+}
+
+// Fetch the max value we can set from /proc/sys/net/core/rmem_max
+// This value is mounted in from the host via the kube yaml
+func fetchRmemMax() int {
+	var rmemMax int
+	file, err := os.Open("/proc/sys/net/core/rmem_max")
+	if err != nil {
+		slog.Error.Println(fmt.Sprintf("Error opening rmem_max: [%v]", err))
+	}
+	defer file.Close()
+
+	_, err = fmt.Fscanf(file, "%d", &rmemMax)
+	if err != nil {
+		slog.Error.Println(fmt.Sprintf("Error reading the rmem_max value: [%v]", err))
+	}
+	return rmemMax
 }
 
 func handleMsg(msg *syscall.NetlinkMessage, marshaller *marshaller.AuditMarshaller) {
