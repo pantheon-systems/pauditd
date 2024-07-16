@@ -30,6 +30,7 @@ type HTTPWriter struct {
 	traceHeaderName         string
 	workerShutdownSignals   chan struct{}
 	cancelFunc              context.CancelFunc
+	buffErrCount            int
 }
 
 type messageTransport struct {
@@ -68,19 +69,18 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 	}
 
 	bytesSent := len(p)
-	errCount := 0
 	select {
 	case w.messages <- transport:
-		errCount = 0
+		w.buffErrCount = 0
 	default:
 		slog.Error.Printf("Buffer full or closed, messages dropped")
 		metric.GetClient().Increment("http_writer.dropped_messages")
 
 		// Exit the pod if the error persists
-		if errCount > 10 {
+		if w.buffErrCount > 10 {
 			os.Exit(1)
 		}
-		errCount++
+		w.buffErrCount++
 	}
 
 	return bytesSent, nil
@@ -205,6 +205,7 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		traceHeaderName:         writerConfig.traceHeaderName,
 		workerShutdownSignals:   workerShutdownSignals,
 		cancelFunc:              cancel,
+		buffErrCount:            0,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {
