@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
-	"os"
 
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
@@ -21,7 +20,7 @@ const (
 	MAX_AUDIT_MESSAGE_LENGTH = 8970
 )
 
-//TODO: this should live in a marshaller
+// TODO: this should live in a marshaller
 type AuditStatusPayload struct {
 	Mask            uint32
 	Enabled         uint32
@@ -56,7 +55,6 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	n := &NetlinkClient{
 		fd:                   fd,
 		address:              &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: 0, Pid: 0},
-		buf:                  make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
 		cancelKeepConnection: make(chan struct{}),
 	}
 
@@ -123,25 +121,26 @@ func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
 func (n *NetlinkClient) Receive() (*syscall.NetlinkMessage, error) {
 	// Large message handling
 	// See https://mdlayher.com/blog/linux-netlink-and-go-part-1-netlink/
-	b := make([]byte, os.Getpagesize())
+	// Use a new buffer every time since this is spawned in a goroutine
+	buf := make([]byte, MAX_AUDIT_MESSAGE_LENGTH)
 	for {
-			// Peek at the buffer to see how many bytes are available.
-			n, _, err := syscall.Recvfrom(n.fd, n.buf, syscall.MSG_PEEK)
-			if err != nil {
-					return nil, err
-			}
+		// Peek at the buffer to see how many bytes are available.
+		b, _, err := syscall.Recvfrom(n.fd, buf, syscall.MSG_PEEK)
+		if err != nil {
+			return nil, err
+		}
 
-			// Break when we can read all messages.
-			if n < len(b) {
-					break
-			}
+		// Break when we can read all messages.
+		if b < len(buf) {
+			break
+		}
 
-			// Double in size if not enough bytes.
-			b = make([]byte, len(b)*2)
+		// Double in size if not enough bytes.
+		buf = make([]byte, len(buf)*2)
 	}
 
 	// Read out all available messages.
-	nlen, _, err := syscall.Recvfrom(n.fd, n.buf, 0)
+	nlen, _, err := syscall.Recvfrom(n.fd, buf, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -152,13 +151,13 @@ func (n *NetlinkClient) Receive() (*syscall.NetlinkMessage, error) {
 
 	msg := &syscall.NetlinkMessage{
 		Header: syscall.NlMsghdr{
-			Len:   Endianness.Uint32(n.buf[0:4]),
-			Type:  Endianness.Uint16(n.buf[4:6]),
-			Flags: Endianness.Uint16(n.buf[6:8]),
-			Seq:   Endianness.Uint32(n.buf[8:12]),
-			Pid:   Endianness.Uint32(n.buf[12:16]),
+			Len:   Endianness.Uint32(buf[0:4]),
+			Type:  Endianness.Uint16(buf[4:6]),
+			Flags: Endianness.Uint16(buf[6:8]),
+			Seq:   Endianness.Uint32(buf[8:12]),
+			Pid:   Endianness.Uint32(buf[12:16]),
 		},
-		Data: n.buf[syscall.SizeofNlMsghdr:nlen],
+		Data: buf[syscall.SizeofNlMsghdr:nlen],
 	}
 
 	return msg, nil
