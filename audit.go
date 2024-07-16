@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
@@ -201,7 +202,6 @@ func main() {
 	//Main loop. Get data from netlink and send it to the json lib for processing
 	for {
 		msg, err := nlClient.Receive()
-		timing := metric.GetClient().NewTiming() // measure latency from recipt of message
 		if err != nil {
 			if err.Error() == "no buffer space available" {
 				metric.GetClient().Increment("messages.netlink_dropped")
@@ -209,13 +209,18 @@ func main() {
 			slog.Error.Printf("Error during message receive: %+v\n", err)
 			continue
 		}
-
-		metric.GetClient().Increment("messages.total")
 		if msg == nil {
 			continue
 		}
-
-		marshaller.Consume(msg)
-		timing.Send("latency")
+		// As soon as we have a message, spawn a goroutine to handle it and free up the main loop
+		go handleMsg(msg, marshaller)
 	}
+}
+
+func handleMsg(msg *syscall.NetlinkMessage, marshaller *marshaller.AuditMarshaller) {
+	timing := metric.GetClient().NewTiming() // measure latency from recipt of message
+	metric.GetClient().Increment("messages.total")
+
+	marshaller.Consume(msg)
+	timing.Send("latency")
 }
