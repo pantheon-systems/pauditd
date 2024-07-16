@@ -176,7 +176,29 @@ func main() {
 		slog.Error.Fatal(err)
 	}
 
-	nlClient, err := NewNetlinkClient(config.GetInt("socket_buffer.receive"))
+	recvSize := 0
+	// Fetch the max value we can set from /proc/sys/net/core/rmem_max
+	// This value is mounted in from the host via the kube yaml
+	// Open the file
+	file, err := os.Open("/proc/sys/net/core/rmem_max")
+	if err != nil {
+		slog.Error.Fatal(fmt.Sprintf("Error opening rmem_max: [%v]", err))
+	}
+	defer file.Close()
+	// Read the value
+	var rmemMax int
+	_, err = fmt.Fscanf(file, "%d", &rmemMax)
+	if err != nil {
+		slog.Error.Fatal(fmt.Sprintf("Error reading the rmem_max value: [%v]", err))
+	}
+	// If the value is 0, use the default value from the config
+	recvSize = rmemMax
+	if rmemMax == 0 {
+		recvSize = config.GetInt("socket_buffer.receive")
+	}
+	slog.Info.Printf("Setting the receive buffer size to %d\n", recvSize)
+
+	nlClient, err := NewNetlinkClient(recvSize)
 	if err != nil {
 		slog.Error.Fatal(err)
 	}
