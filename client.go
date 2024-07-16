@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"time"
+	"os"
 
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
@@ -120,6 +121,26 @@ func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
 
 // Receive will receive a packet from a netlink socket
 func (n *NetlinkClient) Receive() (*syscall.NetlinkMessage, error) {
+	// Large message handling
+	// See https://mdlayher.com/blog/linux-netlink-and-go-part-1-netlink/
+	b := make([]byte, os.Getpagesize())
+	for {
+			// Peek at the buffer to see how many bytes are available.
+			n, _, err := syscall.Recvfrom(n.fd, n.buf, syscall.MSG_PEEK)
+			if err != nil {
+					return nil, err
+			}
+
+			// Break when we can read all messages.
+			if n < len(b) {
+					break
+			}
+
+			// Double in size if not enough bytes.
+			b = make([]byte, len(b)*2)
+	}
+
+	// Read out all available messages.
 	nlen, _, err := syscall.Recvfrom(n.fd, n.buf, 0)
 	if err != nil {
 		return nil, err
