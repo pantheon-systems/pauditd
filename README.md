@@ -1,14 +1,11 @@
 # pauditd
 
 [![CircleCI](https://circleci.com/gh/pantheon-systems/pauditd/tree/master.svg?style=svg)](https://circleci.com/gh/pantheon-systems/pauditd/tree/master)
-[![Unsupported](https://img.shields.io/badge/Pantheon-Unsupported-yellow?logo=pantheon&color=FFDC28)](https://pantheon.io/docs/oss-support-levels#unsupported)
-
+[![Unsupported](https://img.shields.io/badge/Pantheon-Unsupported-yellow?logo=pantheon&color=FFDC28)](https://pantheon.io/docs/oss-support-levels#unsupported) ![GitHub](https://img.shields.io/github/license/pantheon-systems/pauditd?color=FFDC28&logo=go)
 
 ## About
 
 pauditd is an alternative to the auditd daemon that ships with many distros.
-
-[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
 
 ## Audit Documentation
 
@@ -175,22 +172,22 @@ This is likely because you are running `journald` which is also reading audit ev
 sudo systemctl mask systemd-journald-audit.socket
 ```
 
-You may have to restart the _systemd-journald.service_ after masking the socket.
+You may have to restart the *systemd-journald.service* after masking the socket.
 
 if this problem persists it is because the netlink socket buffers are getting full and the default for overflow is to dump to the kernel logging sub-system. This can be disabled by setting the audit configuration option for what to do when the enqueue on the buffer fails. You can set this setting by using a special audit rule in the `pauditd.yaml` configuration file:
 
-```
+```console
 -f N
 ```
 
 Where the `N` is either 0, 1 or 2.
 
-```
+```console
 0 -> discard
 1 -> kernel logging subsystem
 2 -> panic
 ```
 
-## Thanks
+## Thank You
 
-To slackhq for the inspiration via https://github.com/slackhq/go-audit
+To slackhq for the inspiration via [Slack go-audit](https://github.com/slackhq/go-audit)
