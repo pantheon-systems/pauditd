@@ -34,7 +34,7 @@ jobs:
       - run: ~/autotag
       - run:
           name: go releaser
-          command: curl -vsL https://git.io/goreleaser | bash -s -- --parallelism=2
+          command: curl -vsL https://git.io/goreleaser | bash -sx -s -- --parallelism=2
       - store_artifacts:
           path: /home/circleci/pauditd/dist
       - persist_to_workspace:
