@@ -19,6 +19,10 @@ import (
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
+const (
+	maxBuffErrCount = 10
+)
+
 // HTTPWriter is the class that encapsulates the http output plugin
 type HTTPWriter struct {
 	url                     string
@@ -30,6 +34,7 @@ type HTTPWriter struct {
 	traceHeaderName         string
 	workerShutdownSignals   chan struct{}
 	cancelFunc              context.CancelFunc
+	buffErrCount            int
 }
 
 type messageTransport struct {
@@ -70,9 +75,16 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 	bytesSent := len(p)
 	select {
 	case w.messages <- transport:
+		w.buffErrCount = 0
 	default:
 		slog.Error.Printf("Buffer full or closed, messages dropped")
 		metric.GetClient().Increment("http_writer.dropped_messages")
+
+		// Exit the pod if the error persists
+		if w.buffErrCount > maxBuffErrCount {
+			os.Exit(1)
+		}
+		w.buffErrCount++
 	}
 
 	return bytesSent, nil
@@ -197,6 +209,7 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 		traceHeaderName:         writerConfig.traceHeaderName,
 		workerShutdownSignals:   workerShutdownSignals,
 		cancelFunc:              cancel,
+		buffErrCount:            0,
 	}
 
 	for i := 0; i < writerConfig.workerCount; i++ {
