@@ -60,21 +60,21 @@ workflows:
       - test:
           context:
             - docker-executor-auth
-      # - build-release:
-      #     context:
-      #       - docker-executor-auth
-      #       - sig-go-release
-      #     requires:
-      #       - test
-      #     filters:
-      #       branches:
-      #         only:
-      #           - master
-      # - publish-rpm:
-      #     requires:
-      #       - build-release
-      #     filters:
-      #       branches:
-      #         only:
-      #           - master
+      - build-release:
+          context:
+            - docker-executor-auth
+            - sig-go-release
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+      - publish-rpm:
+          requires:
+            - build-release
+          filters:
+            branches:
+              only:
+                - master
 
