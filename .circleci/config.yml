@@ -66,15 +66,8 @@ workflows:
             - sig-go-release
           requires:
             - test
-          filters:
-            branches:
-              only:
-                - master
       - publish-rpm:
           requires:
             - build-release
-          filters:
-            branches:
-              only:
-                - master
+
 
