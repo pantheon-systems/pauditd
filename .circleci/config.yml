@@ -32,7 +32,9 @@ jobs:
             xargs curl -o ~/autotag -L \
             && chmod 755 ~/autotag
       - run: ~/autotag
-      - run: curl -sL https://git.io/goreleaser | bash -s -- --parallelism=2
+      - run:
+          name: go releaser
+          command: curl -vsL https://git.io/goreleaser | bash -sx -s -- --parallelism=2
       - store_artifacts:
           path: /home/circleci/pauditd/dist
       - persist_to_workspace:
@@ -66,15 +68,8 @@ workflows:
             - sig-go-release
           requires:
             - test
-          filters:
-            branches:
-              only:
-                - master
       - publish-rpm:
           requires:
             - build-release
-          filters:
-            branches:
-              only:
-                - master
+
 
