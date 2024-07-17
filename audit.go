@@ -244,6 +244,12 @@ func fetchRmemMax() int {
 }
 
 func handleMsg(msg *syscall.NetlinkMessage, marshaller *marshaller.AuditMarshaller) {
+	defer func() {
+		if r := recover(); r != nil {
+			slog.Error.Printf("Panic occurred in handleMsg: %v", r)
+		}
+	}()
+
 	timing := metric.GetClient().NewTiming() // measure latency from recipt of message
 	metric.GetClient().Increment("messages.total")
 
