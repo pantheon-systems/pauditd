@@ -194,3 +194,4 @@ Where the `N` is either 0, 1 or 2.
 ## Thanks
 
 To slackhq for the inspiration via https://github.com/slackhq/go-audit
+
