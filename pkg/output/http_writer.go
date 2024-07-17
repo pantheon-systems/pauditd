@@ -19,6 +19,10 @@ import (
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
 
+const (
+	maxBuffErrCount = 10
+)
+
 // HTTPWriter is the class that encapsulates the http output plugin
 type HTTPWriter struct {
 	url                     string
@@ -77,7 +81,7 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 		metric.GetClient().Increment("http_writer.dropped_messages")
 
 		// Exit the pod if the error persists
-		if w.buffErrCount > 10 {
+		if w.buffErrCount > maxBuffErrCount {
 			os.Exit(1)
 		}
 		w.buffErrCount++
