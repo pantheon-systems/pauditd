@@ -32,13 +32,7 @@ jobs:
             xargs curl -o ~/autotag -L \
             && chmod 755 ~/autotag
       - run: ~/autotag
-      - run:
-          name: Download and run goreleaser script
-          command: |
-            curl -sL https://git.io/goreleaser -o goreleaser.sh
-            # Optionally inspect goreleaser.sh here
-            chmod +x goreleaser.sh
-            ./goreleaser.sh --parallelism=2
+      - run: curl -sL https://git.io/goreleaser | bash -s 
       - store_artifacts:
           path: /home/circleci/pauditd/dist
       - persist_to_workspace:
