@@ -140,6 +140,9 @@ func (a *AuditMarshaller) filterSyscallMessageType(msg *parser.AuditMessageGroup
 		if fg, hasFilter := syscallFilters[msg.Type]; hasFilter {
 			for _, filter := range fg {
 				if filter.Regex.MatchString(msg.Data) {
+					if filter.Action != Keep {
+						slog.Info.Printf("msg is getting Dropped %s\n", msg.Data)
+					}
 					return filter.Action
 				}
 			}
@@ -167,6 +170,9 @@ func (a *AuditMarshaller) filterRuleKey(msgGroup *parser.AuditMessageGroup) Filt
 	// to the next rule
 	for _, filter := range ruleKeyFilters {
 		if filter.Regex.MatchString(fullMessage) {
+			if filter.Action != Keep {
+				slog.Info.Printf("msg is getting Dropped %s\n", fullMessage)
+			}
 			return filter.Action
 		}
 	}
@@ -196,7 +202,7 @@ func (a *AuditMarshaller) detectMissing(seq int) {
 			}
 			delete(a.missed, missedSeq)
 		} else if seq-missedSeq > a.maxOutOfOrder {
-			slog.Error.Printf("Likely missed sequence %d, current %d, worst message delay %d\n", missedSeq, seq, a.worstLag)
+			//slog.Error.Printf("Likely missed sequence %d, current %d, worst message delay %d\n", missedSeq, seq, a.worstLag)
 			delete(a.missed, missedSeq)
 		}
 	}
