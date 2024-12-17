@@ -59,8 +59,15 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run: make build-image
-      - run: make push-image
+      - setup_remote_docker
+      - run: make setup-quay
+      - run: make build
+      - run: make build-docker
+      - run: make push
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./
 
 workflows:
   version: 2
@@ -74,6 +81,9 @@ workflows:
             - docker-executor-auth
           requires:
             - test
+          filters:
+            branches:
+              ignore: master
       - build-release:
           context:
             - docker-executor-auth
