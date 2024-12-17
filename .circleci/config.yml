@@ -52,6 +52,15 @@ jobs:
       - run: package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
       - run: package_cloud push pantheon/public/el/7 ./dist/*.rpm
 
+  build-image:
+    docker:
+      - image: cimg/go:1.18
+    working_directory: /home/circleci/pauditd
+    steps:
+      - attach_workspace:
+          at: .
+      - run: make build-image
+      - run: make push-image
 
 workflows:
   version: 2
@@ -60,6 +69,11 @@ workflows:
       - test:
           context:
             - docker-executor-auth
+      - build-image:
+          context:
+            - docker-executor-auth
+          requires:
+            - test
       - build-release:
           context:
             - docker-executor-auth
