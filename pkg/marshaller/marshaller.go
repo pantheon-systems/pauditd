@@ -141,7 +141,7 @@ func (a *AuditMarshaller) filterSyscallMessageType(msg *parser.AuditMessageGroup
 			for _, filter := range fg {
 				if filter.Regex.MatchString(msg.Data) {
 					if filter.Action != Keep {
-						slog.Info.Printf("msg is getting Dropped %s\n", msg.Data)
+						slog.Info.Printf("[syscall] msg is getting Dropped {%s} %s\n", filter.Regex.String(), msg.Data)
 					}
 					return filter.Action
 				}
@@ -171,7 +171,7 @@ func (a *AuditMarshaller) filterRuleKey(msgGroup *parser.AuditMessageGroup) Filt
 	for _, filter := range ruleKeyFilters {
 		if filter.Regex.MatchString(fullMessage) {
 			if filter.Action != Keep {
-				slog.Info.Printf("msg is getting Dropped %s\n", fullMessage)
+				slog.Info.Printf("[filter] msg is getting Dropped {%s}  %s\n", filter.Regex.String(), fullMessage)
 			}
 			return filter.Action
 		}
