@@ -1,0 +1,207 @@
+name: Build and Release
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  deps:
+    runs-on: sbx-pan-go-1-24
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/go/pkg/mod
+          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
+          lookup-only: true
+
+      - id: go-internal
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: pantheon-systems/common-gh/go-internal-goproxy@migrate-wif
+
+      - run: make deps
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GOPROXY: "${{ steps.go-internal.outputs.goproxy }}"
+
+  format:
+    runs-on: sbx-pan-go-1-24
+    permissions:
+      contents: read
+    needs: [deps]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/go/pkg/mod
+          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
+          fail-on-cache-miss: true
+
+      - run: make format check-format
+        env:
+          GOLINT_ARGS: "-v --timeout 5m"
+
+  lint:
+    runs-on: sbx-pan-go-1-24
+    permissions:
+      contents: read
+    needs: [deps]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/go/pkg/mod
+          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
+          fail-on-cache-miss: true
+
+      - run: make lint
+        env:
+          GOLINT_ARGS: "-v --timeout 5m"
+
+  test:
+    runs-on: sbx-pan-go-1-24
+    permissions:
+      contents: read
+      id-token: write
+    needs: [deps]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/go/pkg/mod
+          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
+          fail-on-cache-miss: true
+
+      - run: make test-go-tparse
+        env:
+          CGO_ENABLED: "0"
+
+      - run: make test-coverage
+        env:
+          CGO_ENABLED: "0"
+
+      - id: codacy-secret
+        uses: pantheon-systems/common-gh/get-repo-codacy-secret@main
+
+      - name: Run codacy-coverage-reporter
+        uses: codacy/codacy-coverage-reporter-action@v1
+        with:
+          project-token: "${{ steps.codacy-secret.outputs.secret }}"
+          force-coverage-parser: go
+          coverage-reports: coverage.out
+
+  goreleaser-check:
+    runs-on: sbx-pan-go-1-24
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: "Check goreleaser's Configuration"
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: check
+
+  build:
+    runs-on: sbx-pan-go-1-24
+    permissions:
+      contents: read
+    needs: [deps]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: code
+          fetch-tags: true
+          fetch-depth: 0
+
+      - name: Cache go modules
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: /home/runner/go/pkg/mod
+          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
+          fail-on-cache-miss: true
+      
+      - id: tag
+        uses: pantheon-systems/common-gh/tag@main
+        with:
+          push: true
+          workdir: code
+        env:
+          BRANCH: "${{ github.head_ref || github.ref_name }}"
+
+      - name: Build RPMs with GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # For now, we are only using GoReleaser to build the go binary and to
+          # package the RPMs
+          args: release --clean --skip=archive --skip=docker --skip=publish
+          version: "~> v2"
+          workdir: code
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload RPM Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rpm-artifacts
+          path: code/dist/*.rpm
+
+  release:
+    runs-on: int-pan-base
+    permissions:
+      contents: write
+      id-token: write
+    if: github.event_name != 'pull_request'
+    needs: [format, lint, test, build, goreleaser-check]
+    steps:
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1'  # or another version as required
+
+      - name: Download RPM Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: rpm-artifacts
+          path: dist
+
+      - name: Push RPMs to PackageCloud
+        run: |
+          gem install package_cloud
+          package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
+          package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
+          package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
+          package_cloud push pantheon/public/el/7 ./dist/*.rpm
