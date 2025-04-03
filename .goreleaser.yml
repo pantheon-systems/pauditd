@@ -61,3 +61,11 @@ dockers:
       - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
       - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
       - "quay.io/getpantheon/pauditd:latest"
+
+# GitHub Releases
+release:
+  github:
+      owner: pantheon-systems
+      name: pauditd
+      draft: false      # Set to true if you want to manually review before publishing
+      prerelease: false # Set to true for pre-releases

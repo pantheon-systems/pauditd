@@ -4,7 +4,6 @@ on:
     branches:
       - master
   pull_request:
-    types: [assigned, opened, synchronize, reopened, ready_for_review, converted_to_draft]
 
 jobs:
   deps:
@@ -166,9 +165,9 @@ jobs:
       - name: Build RPMs with GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          # For now, we are only using GoReleaser to build the go binary and to
-          # package the RPMs
-          args: release --clean --skip=archive --skip=docker --skip=publish
+          # @todo: Do we need the RPMs to be built for this binary?
+          # Build the RPM, but do not publish (upload) a GitHub release yet.
+          args: release --clean --skip=publish,snapshot,docker
           version: "~> v2"
           workdir: code
         env:
@@ -181,7 +180,7 @@ jobs:
           path: code/dist/*.rpm
 
   release:
-    runs-on: int-pan-base
+    runs-on: int-pan-go-1-24
     permissions:
       contents: write
       id-token: write
@@ -199,10 +198,20 @@ jobs:
           name: rpm-artifacts
           path: dist
 
-      - name: Push RPMs to PackageCloud
+      - name: Publish RPMs to PackageCloud
         run: |
           gem install package_cloud
           package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
           package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
           package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
           package_cloud push pantheon/public/el/7 ./dist/*.rpm
+
+      - name: Publish GitHub Release (Binary, Checksum, Changelog Only)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          # This run will publish a GitHub release but skip the nfpm (RPM), snapshot, and docker artifacts.
+          args: release --clean --skip=nfpm,snapshot,docker
+          version: "~> v2"
+          workdir: code
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
