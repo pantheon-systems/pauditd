@@ -3,25 +3,27 @@ version: 2
 project_name: pauditd
 
 builds:
-- binary: pauditd
-  env:
-    - CGO_ENABLED=1
-  ldflags:
-    - -s -w
-  goos:
-    - linux
-  goarch:
-    - amd64
+  -
+    binary: pauditd
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+    goarch:
+      - amd64
 
 archives:
-  - id: tarball
+  -
+    id: tarball
     name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
 
 checksum:
   name_template: 'checksums.txt'
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
@@ -51,11 +53,11 @@ dockers:
   -
     dockerfile: Dockerfile
     ids:
-    - pauditd
+      - pauditd
     goos: linux
     goarch: amd64
     image_templates:
-    - "quay.io/getpantheon/pauditd:{{ .Tag }}"                  # v1.0.0
-    - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
-    - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
-    - "quay.io/getpantheon/pauditd:latest"
+      - "quay.io/getpantheon/pauditd:{{ .Tag }}"                  # v1.0.0
+      - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
+      - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
+      - "quay.io/getpantheon/pauditd:latest"

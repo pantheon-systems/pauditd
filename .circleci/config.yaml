@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   test:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.23
     working_directory: /home/circleci/pauditd
     steps:
       - checkout
@@ -15,7 +15,7 @@ jobs:
 
   build-release:
     docker:
-      - image: cimg/go:1.18
+      - image: cimg/go:1.23
     working_directory: /home/circleci/pauditd
     steps:
       - attach_workspace:
@@ -77,4 +77,3 @@ workflows:
             branches:
               only:
                 - master
-
