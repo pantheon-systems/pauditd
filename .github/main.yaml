@@ -206,10 +206,11 @@ jobs:
           package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
           package_cloud push pantheon/public/el/7 ./dist/*.rpm
 
+      # Publish a GitHub Release, skipping the nfpm (RPM), snapshot, and docker
+      # artifacts.
       - name: Publish GitHub Release (Binary, Checksum, Changelog Only)
         uses: goreleaser/goreleaser-action@v6
         with:
-          # This run will publish a GitHub release but skip the nfpm (RPM), snapshot, and docker artifacts.
           args: release --clean --skip=nfpm,snapshot,docker
           version: "~> v2"
           workdir: code
