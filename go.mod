@@ -1,6 +1,6 @@
 module github.com/pantheon-systems/pauditd
 
-go 1.23
+go 1.24
 
 require (
 	github.com/pantheon-systems/certinel v1.2.9
