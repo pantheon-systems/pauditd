@@ -114,7 +114,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 				continue
 			}
 			if w.debug {
-				slog.Info.Printf(string(body))
+				slog.Info.Println(string(body))
 			}
 			payloadReader := bytes.NewReader(body)
 
