@@ -67,5 +67,5 @@ release:
   github:
       owner: pantheon-systems
       name: pauditd
-      draft: false      # Set to true if you want to manually review before publishing
-      prerelease: false # Set to true for pre-releases
+  draft: false      # Set to true if you want to manually review before publishing
+  prerelease: false # Set to true for pre-releases
