@@ -7,7 +7,7 @@ on:
 
 jobs:
   deps:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -15,8 +15,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          # Keep cache enabled on GitHub Actions, but disable it only when
+          # running locally via 'act'.
+          cache: ${{ env.ACT != 'true' }}
 
       - name: Cache go modules
+        # If running locally via 'act', skip the cache step
+        if: env.ACT != 'true'
         uses: actions/cache@v4
         id: cache
         with:
@@ -24,17 +34,11 @@ jobs:
           key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
           lookup-only: true
 
-      - id: go-internal
-        if: steps.cache.outputs.cache-hit != 'true'
-        uses: pantheon-systems/common-gh/go-internal-goproxy@migrate-wif
-
-      - run: make deps
-        if: steps.cache.outputs.cache-hit != 'true'
-        env:
-          GOPROXY: "${{ steps.go-internal.outputs.goproxy }}"
+      - name: Download dependencies
+        run: go mod download
 
   format:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     needs: [deps]
@@ -44,21 +48,39 @@ jobs:
         with:
           fetch-tags: true
           fetch-depth: 0
-
-      - name: Cache go modules
-        uses: actions/cache@v4
-        id: cache
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          path: /home/runner/go/pkg/mod
-          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
-          fail-on-cache-miss: true
+          go-version: '1.24.x'
+          # Keep cache enabled on GitHub Actions, but disable it only when
+          # running locally via 'act'.
+          cache: ${{ env.ACT != 'true' }}
 
-      - run: make format check-format
-        env:
-          GOLINT_ARGS: "-v --timeout 5m"
+      - name: Tidy
+        run: |
+          echo "==> cleaning up go.mod"
+          go mod tidy
+
+      - name: Format
+        run: |
+          echo "==> formatting go-code"
+          go fmt ./...
+
+      - name: Check for uncommitted changes
+        id: changes
+        uses: UnicornGlobal/has-changes-action@v1.0.11
+
+      - name: Fail if uncommitted changes exist
+        if: steps.changes.outputs.changed == '1'
+        run: |
+          echo "The following files have changed on disk:"
+          git status --porcelain
+          git --no-pager diff
+          exit 1
 
   lint:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     needs: [deps]
@@ -69,6 +91,14 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.x'
+          # Keep cache enabled on GitHub Actions, but disable it only when
+          # running locally via 'act'.
+          cache: ${{ env.ACT != 'true' }}
+
       - name: Cache go modules
         uses: actions/cache@v4
         id: cache
@@ -77,12 +107,13 @@ jobs:
           key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
           fail-on-cache-miss: true
 
-      - run: make lint
-        env:
-          GOLINT_ARGS: "-v --timeout 5m"
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.0
 
   test:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -94,34 +125,36 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
-      - name: Cache go modules
-        uses: actions/cache@v4
-        id: cache
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          path: /home/runner/go/pkg/mod
-          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
-          fail-on-cache-miss: true
+          go-version: '1.24.x'
+          # Keep cache enabled on GitHub Actions, but disable it only when
+          # running locally via 'act'.
+          cache: ${{ env.ACT != 'true' }}
+      
+      - name: Install go-ctrf-json-reporter
+        run: go install github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter@latest
 
-      - run: make test-go-tparse
-        env:
-          CGO_ENABLED: "0"
+      - name: Run tests and convert to CTRF
+        run: |
+          go test -v -json ./... | go-ctrf-json-reporter -output ctrf-report.json || true
 
-      - run: make test-coverage
-        env:
-          CGO_ENABLED: "0"
-
-      - id: codacy-secret
-        uses: pantheon-systems/common-gh/get-repo-codacy-secret@main
-
-      - name: Run codacy-coverage-reporter
-        uses: codacy/codacy-coverage-reporter-action@v1
+      - name: Report results to GitHub
+        uses: ctrf-io/github-test-reporter@v1
         with:
-          project-token: "${{ steps.codacy-secret.outputs.secret }}"
-          force-coverage-parser: go
-          coverage-reports: coverage.out
+          report-path: './ctrf-report.json'
+          reporter: gotest-json
+
+      - name: Abort if tests failed
+        run: |
+          if grep '"Action":"fail"' test-report.json; then
+            echo "❌ Tests failed"
+            exit 1
+          fi
 
   goreleaser-check:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -134,7 +167,7 @@ jobs:
           args: check
 
   build:
-    runs-on: sbx-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     needs: [deps]
@@ -154,13 +187,18 @@ jobs:
           key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
           fail-on-cache-miss: true
       
-      - id: tag
-        uses: pantheon-systems/common-gh/tag@main
+      # - id: tag
+      #   uses: pantheon-systems/common-gh/tag@main
+      #   with:
+      #     push: true
+      #     workdir: code
+      #   env:
+      #     BRANCH: "${{ github.head_ref || github.ref_name }}"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          push: true
-          workdir: code
-        env:
-          BRANCH: "${{ github.head_ref || github.ref_name }}"
+          go-version: '1.24.x'
 
       - name: Build RPMs with GoReleaser
         uses: goreleaser/goreleaser-action@v6
@@ -180,7 +218,7 @@ jobs:
           path: code/dist/*.rpm
 
   release:
-    runs-on: int-pan-go-1-24
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
