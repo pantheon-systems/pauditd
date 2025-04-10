@@ -23,6 +23,11 @@ jobs:
       pull-requests: read
     name: Install dependencies
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          path: code
+
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
         with:
@@ -41,6 +46,11 @@ jobs:
       contents: read
     needs: [deps]
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          path: code
+
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
         with:
@@ -73,6 +83,11 @@ jobs:
       contents: read
     needs: [deps]
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          path: code
+
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
         with:
@@ -92,6 +107,11 @@ jobs:
       id-token: write
     needs: [deps]
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          path: code
+
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
         with:
@@ -143,6 +163,11 @@ jobs:
       contents: read
     needs: [deps]
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          path: code
+
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
         with:
