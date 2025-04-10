@@ -17,10 +17,10 @@ builds:
 archives:
   -
     id: tarball
-    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   version_template: "{{ .Tag }}-next"
@@ -29,10 +29,10 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - Merge pull request
-      - Merge branch
+      - "^docs:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"
 
 nfpms:
   -
