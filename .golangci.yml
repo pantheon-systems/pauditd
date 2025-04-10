@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 run:
   timeout: 5m
@@ -24,19 +24,5 @@ linters:
   settings:
     gocyclo:
       min-complexity: 15
-    revive:
-      ignore-generated-header: true
     errcheck:
       check-type-assertions: true
-
-issues:
-  exclude-use-default: false
-  max-issues-per-linter: 0
-  max-same-issues: 0
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-    - text: "cyclomatic complexity"
-      linters:
-        - gocyclo
