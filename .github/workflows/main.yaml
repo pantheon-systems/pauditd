@@ -25,8 +25,6 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
-        with:
-          path: code
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -36,7 +34,8 @@ jobs:
 
       - name: "Download dependencies"
         run: go mod download
-        working-directory: code
+        working-directory: .
+
         env:
           GO111MODULE: on
 
@@ -48,8 +47,6 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
-        with:
-          path: code
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -63,7 +60,7 @@ jobs:
           go mod tidy
           echo "==> formatting go-code"
           go fmt ./...
-        working-directory: code
+        working-directory: .
 
       - name: "Check for uncommitted changes"
         id: changes
@@ -85,8 +82,6 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
-        with:
-          path: code
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -98,7 +93,7 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.0
-          working-directory: code
+          working-directory: .
 
   test:
     runs-on: ubuntu-latest
@@ -109,8 +104,6 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
-        with:
-          path: code
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -120,18 +113,18 @@ jobs:
 
       - name: "Install go-ctrf-json-reporter"
         run: go install github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter@latest
-        working-directory: code
+        working-directory: .
 
       - name: "Run Go tests and generate CTRF"
         continue-on-error: true
         run: |
           go test -v -json ./... | go-ctrf-json-reporter -output ctrf-report.json
-        working-directory: code
+        working-directory: .
 
       - name: "Report results to GitHub"
         uses: ctrf-io/github-test-reporter@v1
         with:
-          report-path: "./code/ctrf-report.json"
+          report-path: "./ctrf-report.json"
           reporter: gotest-json
 
       - name: "Abort if tests failed"
@@ -140,7 +133,7 @@ jobs:
             echo "❌ Tests failed"
             exit 1
           fi
-        working-directory: code
+        working-directory: .
 
   goreleaser-check:
     runs-on: ubuntu-latest
@@ -149,13 +142,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          path: code
 
       - name: "Check goreleaser's Configuration"
         uses: ./.github/actions/run-goreleaser
         with:
           args: check
-          workdir: code
+          workdir: .
 
   build:
     runs-on: ubuntu-latest
@@ -165,8 +157,6 @@ jobs:
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
-        with:
-          path: code
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -178,13 +168,13 @@ jobs:
         uses: ./.github/actions/run-goreleaser
         with:
           args: release --clean --skip=publish,docker
-          workdir: code
+          workdir: .
 
       - name: "Upload RPM Artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: rpm-artifacts
-          path: code/dist/*.rpm
+          path: dist/*.rpm
 
   release:
     runs-on: ubuntu-latest
@@ -218,4 +208,4 @@ jobs:
         uses: ./.github/actions/run-goreleaser
         with:
           args: release --clean --skip=nfpm,docker
-          workdir: code
+          workdir: .
