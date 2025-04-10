@@ -1,9 +1,18 @@
 name: Build and Release
+
 on:
   push:
     branches:
       - master
   pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.24.x"
+  USE_GO_CACHE: false
 
 jobs:
   deps:
@@ -12,30 +21,19 @@ jobs:
       contents: read
       id-token: write
       pull-requests: read
+    name: Install dependencies
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
         with:
-          go-version: '1.24.x'
-          # Keep cache enabled on GitHub Actions, but disable it only when
-          # running locally via 'act'.
-          cache: ${{ env.ACT != 'true' }}
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: Cache go modules
-        # If running locally via 'act', skip the cache step
-        if: env.ACT != 'true'
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: /home/runner/go/pkg/mod
-          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
-          lookup-only: true
-
-      - name: Download dependencies
+      - name: "Download dependencies"
         run: go mod download
+        working-directory: code
+        env:
+          GO111MODULE: on
 
   format:
     runs-on: ubuntu-latest
@@ -43,35 +41,25 @@ jobs:
       contents: read
     needs: [deps]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
         with:
-          fetch-tags: true
-          fetch-depth: 0
-      
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-          # Keep cache enabled on GitHub Actions, but disable it only when
-          # running locally via 'act'.
-          cache: ${{ env.ACT != 'true' }}
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: Tidy
+      - name: "Tidy and Format"
         run: |
           echo "==> cleaning up go.mod"
           go mod tidy
-
-      - name: Format
-        run: |
           echo "==> formatting go-code"
           go fmt ./...
+        working-directory: code
 
-      - name: Check for uncommitted changes
+      - name: "Check for uncommitted changes"
         id: changes
         uses: UnicornGlobal/has-changes-action@v1.0.11
 
-      - name: Fail if uncommitted changes exist
+      - name: "Fail if uncommitted changes exist"
         if: steps.changes.outputs.changed == '1'
         run: |
           echo "The following files have changed on disk:"
@@ -85,24 +73,17 @@ jobs:
       contents: read
     needs: [deps]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
         with:
-          fetch-tags: true
-          fetch-depth: 0
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-          # Keep cache enabled on GitHub Actions, but disable it only when
-          # running locally via 'act'.
-          cache: ${{ env.ACT != 'true' }}
-
-      - name: golangci-lint
+      - name: "Run golangci-lint"
         uses: golangci/golangci-lint-action@v7
         with:
           version: v2.0
+          working-directory: code
 
   test:
     runs-on: ubuntu-latest
@@ -111,52 +92,50 @@ jobs:
       id-token: write
     needs: [deps]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
         with:
-          fetch-tags: true
-          fetch-depth: 0
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-          # Keep cache enabled on GitHub Actions, but disable it only when
-          # running locally via 'act'.
-          cache: ${{ env.ACT != 'true' }}
-      
-      - name: Install go-ctrf-json-reporter
+      - name: "Install go-ctrf-json-reporter"
         run: go install github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter@latest
+        working-directory: code
 
-      - name: Run tests and convert to CTRF
+      - name: "Run Go tests and generate CTRF"
+        continue-on-error: true
         run: |
-          go test -v -json ./... | go-ctrf-json-reporter -output ctrf-report.json || true
+          go test -v -json ./... | go-ctrf-json-reporter -output ctrf-report.json
+        working-directory: code
 
-      - name: Report results to GitHub
+      - name: "Report results to GitHub"
         uses: ctrf-io/github-test-reporter@v1
         with:
-          report-path: './ctrf-report.json'
+          report-path: "./code/ctrf-report.json"
           reporter: gotest-json
 
-      - name: Abort if tests failed
+      - name: "Abort if tests failed"
         run: |
-          if grep '"Action":"fail"' test-report.json; then
+          if grep '"Action":"fail"' ctrf-report.json; then
             echo "❌ Tests failed"
             exit 1
           fi
+        working-directory: code
 
   goreleaser-check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: code
 
       - name: "Check goreleaser's Configuration"
-        uses: goreleaser/goreleaser-action@v6
+        uses: ./.github/actions/run-goreleaser
         with:
-          distribution: goreleaser
-          version: "~> v2"
           args: check
+          workdir: code
 
   build:
     runs-on: ubuntu-latest
@@ -164,46 +143,19 @@ jobs:
       contents: read
     needs: [deps]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
         with:
-          path: code
-          fetch-tags: true
-          fetch-depth: 0
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: Cache go modules
-        uses: actions/cache@v4
-        id: cache
+      - name: "Build RPMs"
+        uses: ./.github/actions/run-goreleaser
         with:
-          path: /home/runner/go/pkg/mod
-          key: "dependencies-${{ runner.os }}-${{ hashFiles('go.sum') }}"
-          fail-on-cache-miss: true
-      
-      # - id: tag
-      #   uses: pantheon-systems/common-gh/tag@main
-      #   with:
-      #     push: true
-      #     workdir: code
-      #   env:
-      #     BRANCH: "${{ github.head_ref || github.ref_name }}"
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.x'
-
-      - name: Build RPMs with GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          # @todo: Do we need the RPMs to be built for this binary?
-          # Build the RPM, but do not publish (upload) a GitHub release yet.
-          args: release --clean --skip=publish,snapshot,docker
-          version: "~> v2"
+          args: release --clean --skip=publish,docker
           workdir: code
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload RPM Artifacts
+      - name: "Upload RPM Artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: rpm-artifacts
@@ -217,32 +169,28 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: [format, lint, test, build, goreleaser-check]
     steps:
-      - name: Setup Ruby
+      - name: "Setup Ruby"
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.1'  # or another version as required
+          ruby-version: "3.1"  # or another version as required
 
-      - name: Download RPM Artifacts
+      - name: "Download RPM Artifacts"
         uses: actions/download-artifact@v3
         with:
           name: rpm-artifacts
           path: dist
 
-      - name: Publish RPMs to PackageCloud
-        run: |
-          gem install package_cloud
-          package_cloud push pantheon/public/fedora/22 ./dist/*.rpm
-          package_cloud push pantheon/public/fedora/28 ./dist/*.rpm
-          package_cloud push pantheon/public/fedora/29 ./dist/*.rpm
-          package_cloud push pantheon/public/el/7 ./dist/*.rpm
+      - name: "Install Package Cloud"
+        run: gem install package_cloud
 
-      # Publish a GitHub Release, skipping the nfpm (RPM), snapshot, and docker
-      # artifacts.
-      - name: Publish GitHub Release (Binary, Checksum, Changelog Only)
-        uses: goreleaser/goreleaser-action@v6
+      - name: "Publish RPMs to PackageCloud"
+        run: |
+          for ver in 22 28 29 el/7; do
+            package_cloud push pantheon/public/fedora/$ver ./dist/*.rpm
+          done
+
+      - name: "Publish GitHub Release (Binary, Checksum, Changelog Only)"
+        uses: ./.github/actions/run-goreleaser
         with:
-          args: release --clean --skip=nfpm,snapshot,docker
-          version: "~> v2"
+          args: release --clean --skip=nfpm,docker
           workdir: code
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
