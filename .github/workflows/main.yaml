@@ -13,6 +13,8 @@ concurrency:
 env:
   GO_VERSION: "1.24.x"
   USE_GO_CACHE: false
+  IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/master' }}
+
 
 jobs:
   deps:
@@ -62,16 +64,19 @@ jobs:
           go fmt ./...
         working-directory: .
 
-      - name: "Check for uncommitted changes"
-        id: changes
-        uses: UnicornGlobal/has-changes-action@v1.0.11
+      - name: "Check for changes"
+        id: changed-files
+        uses: tj-actions/changed-files@v44
 
-      - name: "Fail if uncommitted changes exist"
-        if: steps.changes.outputs.changed == '1'
+      - name: "Fail if formatting modified files"
+        if: steps.changed-files.outputs.any_changed == 'true'
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
-          echo "The following files have changed on disk:"
-          git status --porcelain
-          git --no-pager diff
+          echo "The following files have changed:"
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file was changed"
+          done
           exit 1
 
   lint:
@@ -164,47 +169,64 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           use-cache: ${{ env.USE_GO_CACHE }}
 
-      - name: "Build RPMs"
+      - name: "Build Artifacts"
         uses: ./.github/actions/run-goreleaser
         with:
-          args: release --clean --skip=publish,docker
+          args: release --clean --snapshot --skip=publish
           workdir: .
 
-      - name: "Upload RPM Artifacts"
+      - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-artifacts
-          path: dist/*.rpm
+          name: build-artifacts
+          path: |
+            dist/**
+            !dist/*.txt
 
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
-    if: github.event_name != 'pull_request'
     needs: [format, lint, test, build, goreleaser-check]
     steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Fetch tags"
+        run: git fetch --tags --force
+
+      - name: "Install and Run autotag"
+        if: env.IS_MAIN_BRANCH == 'true'
+        uses: pantheon-systems/action-autotag@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Download RPM Artifacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: dist
+
       - name: "Setup Ruby"
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.1"  # or another version as required
 
-      - name: "Download RPM Artifacts"
-        uses: actions/download-artifact@v3
-        with:
-          name: rpm-artifacts
-          path: dist
-
       - name: "Install Package Cloud"
         run: gem install package_cloud
 
       - name: "Publish RPMs to PackageCloud"
+        if: env.IS_MAIN_BRANCH == 'true'
         run: |
           for ver in 22 28 29 el/7; do
             package_cloud push pantheon/public/fedora/$ver ./dist/*.rpm
           done
 
-      - name: "Publish GitHub Release (Binary, Checksum, Changelog Only)"
+      - name: "Publish GitHub Release"
+        if: env.IS_MAIN_BRANCH == 'true'
         uses: ./.github/actions/run-goreleaser
         with:
           args: release --clean --skip=nfpm,docker

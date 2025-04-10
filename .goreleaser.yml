@@ -69,3 +69,4 @@ release:
       name: pauditd
   draft: false      # Set to true if you want to manually review before publishing
   prerelease: false # Set to true for pre-releases
+  skip: true        # Disable GoReleaser from managing the release as it is managed by autotag
