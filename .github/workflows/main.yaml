@@ -158,7 +158,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    needs: [deps]
+    needs: [deps, goreleaser-check]
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
