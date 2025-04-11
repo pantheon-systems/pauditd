@@ -58,24 +58,22 @@ jobs:
 
       - name: "Tidy and Format"
         run: |
-          echo "==> cleaning up go.mod"
           go mod tidy
-          echo "==> formatting go-code"
           go fmt ./...
         working-directory: .
 
       - name: "Check for changes"
         id: changed-files
-        uses: tj-actions/changed-files@v44
+        uses: tj-actions/verify-changed-files@v20.0.4
 
       - name: "Fail if formatting modified files"
-        if: steps.changed-files.outputs.any_changed == 'true'
+        if: steps.changed-files.outputs.files_changed == 'true'
         env:
-          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.changed_files }}
         run: |
           echo "The following files have changed:"
           for file in ${ALL_CHANGED_FILES}; do
-            echo "$file was changed"
+            echo "$file"
           done
           exit 1
 
@@ -188,7 +186,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    needs: [format, lint, test, build, goreleaser-check]
+    needs: [format, lint, test, build]
     steps:
       - name: "Checkout code"
         uses: actions/checkout@v4
