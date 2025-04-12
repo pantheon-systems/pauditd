@@ -23,7 +23,9 @@ func TestMarshallerConstants(t *testing.T) {
 func TestAuditMarshaller_Consume(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Errorf("Failed to configure metric: %v", err)
+	}
 
 	w := &bytes.Buffer{}
 	m := NewAuditMarshaller(output.NewAuditWriter(w, 1), uint16(1100), uint16(1399), false, false, 0, []AuditFilter{})

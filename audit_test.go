@@ -128,7 +128,11 @@ func Test_createOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer l.Close()
+	defer func() {
+		if err := l.Close(); err != nil {
+			t.Errorf("Failed to close listener: %v", err)
+		}
+	}()
 
 	c = viper.New()
 	c.Set("output.syslog.enabled", true)
@@ -324,7 +328,9 @@ func Test_createFilters(t *testing.T) {
 func Benchmark_MultiPacketMessage(b *testing.B) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		b.Errorf("Failed to configure metric: %v", err)
+	}
 
 	marshaller := marshaller.NewAuditMarshaller(output.NewAuditWriter(&noopWriter{}, 1), uint16(1300), uint16(1399), false, false, 1, []marshaller.AuditFilter{})
 

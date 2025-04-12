@@ -101,8 +101,12 @@ func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
 
 	for {
 		buf.Reset()
-		binary.Write(buf, Endianness, np)
-		binary.Write(buf, Endianness, a)
+		if err := binary.Write(buf, Endianness, np); err != nil {
+			return fmt.Errorf("failed to write np: %v", err)
+		}
+		if err := binary.Write(buf, Endianness, a); err != nil {
+			return fmt.Errorf("failed to write a: %v", err)
+		}
 		if np.Len == 0 {
 			length = len(buf.Bytes())
 			np.Len = uint32(length)
@@ -167,4 +171,7 @@ func (n *NetlinkClient) KeepConnection() {
 // Close will stop running goroutines
 func (n *NetlinkClient) Close() {
 	close(n.cancelKeepConnection)
+	if err := syscall.Close(n.fd); err != nil {
+		slog.Error.Println("failed to close syscall fd:", err)
+	}
 }

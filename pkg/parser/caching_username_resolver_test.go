@@ -45,7 +45,11 @@ func Test_testCheckCache(t *testing.T) {
 		filepath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600,
 	)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Errorf("Failed to close file: %v", err)
+		}
+	}()
 
 	// setup cache
 	resolver := &CachingUsernameResolver{
@@ -68,8 +72,13 @@ func Test_testCheckCache(t *testing.T) {
 	assert.Equal(t, 3, len(resolver.cache))
 
 	// modify file
-	f.Write([]byte("update write"))
-	f.Sync()
+	if _, err := f.Write([]byte("update write")); err != nil {
+		t.Errorf("Failed to write to file: %v", err)
+	}
+
+	if err := f.Sync(); err != nil {
+		t.Errorf("Failed to sync file: %v", err)
+	}
 
 	// test cache is cleared
 	result = resolver.checkCache()
@@ -83,6 +92,11 @@ func Test_rapid(t *testing.T) {
 		filepath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600,
 	)
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Errorf("Failed to close file: %v", err)
+		}
+	}()
 
 	// setup test fixture file
 	f.Write([]byte{})
@@ -110,7 +124,13 @@ func Test_rapid(t *testing.T) {
 			for input, expectedOutput := range tests {
 				if count%fileModificationInterval == 0 {
 					// modify file
-					f.Write([]byte{})
+					if _, err := f.Write([]byte("update write")); err != nil {
+						t.Errorf("Failed to write to file: %v", err)
+					}
+
+					if err := f.Sync(); err != nil {
+						t.Errorf("Failed to sync file: %v", err)
+					}
 				}
 				// test method
 				result = resolver.Resolve(input)

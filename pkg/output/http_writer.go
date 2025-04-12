@@ -136,7 +136,9 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 			}
 
 			metric.GetClient().Increment(fmt.Sprintf("http_code.%d", resp.StatusCode))
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				slog.Error.Println("Failed to close response body:", err)
+			}
 
 			transport.timer.Send("http_writer.latency")
 		}

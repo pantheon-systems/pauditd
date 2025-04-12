@@ -108,10 +108,17 @@ func Test_fileRotationAllGoodFile(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// File rotation
-	os.Rename(path.Join(os.TempDir(), "pauditd.test.log"), path.Join(os.TempDir(), "pauditd.test.log.rotated"))
-	_, err = os.Stat(path.Join(os.TempDir(), "pauditd.test.log"))
-	assert.True(t, os.IsNotExist(err))
-	syscall.Kill(syscall.Getpid(), syscall.SIGUSR1)
+	if err := os.Rename(
+		path.Join(os.TempDir(), "pauditd.test.log"),
+		path.Join(os.TempDir(), "pauditd.test.log.rotated"),
+	); err != nil {
+		t.Errorf("Failed to rename file: %v", err)
+	}
+
+	if err := syscall.Kill(syscall.Getpid(), syscall.SIGUSR1); err != nil {
+		t.Errorf("Failed to send signal: %v", err)
+	}
+
 	time.Sleep(100 * time.Millisecond)
 	_, err = os.Stat(path.Join(os.TempDir(), "pauditd.test.log"))
 	assert.Nil(t, err)

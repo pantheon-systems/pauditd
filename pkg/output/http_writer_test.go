@@ -97,7 +97,9 @@ func TestHTTPWriter_write(t *testing.T) {
 
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Errorf("Failed to configure metric: %v", err)
+	}
 	writer := &HTTPWriter{
 		messages: msgChannel,
 	}
@@ -129,7 +131,9 @@ func TestHTTPWriter_process(t *testing.T) {
 		wg.Done()
 	})
 	go func() {
-		http.ListenAndServe(":8888", nil)
+		if err := http.ListenAndServe(":8888", nil); err != nil {
+			t.Errorf("Failed to start HTTP server: %v", err)
+		}
 	}()
 
 	testTransformer := TestTransformer{}

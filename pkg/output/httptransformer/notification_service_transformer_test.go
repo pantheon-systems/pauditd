@@ -72,11 +72,16 @@ func TestNotificationServiceTransformerTransformNoRuleKeyStdout(t *testing.T) {
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		if _, err := io.Copy(&buf, r); err != nil {
+			t.Errorf("Failed to copy data: %v", err)
+		}
 		outC <- buf.String()
 	}()
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Errorf("Failed to close writer: %v", err)
+	}
+
 	os.Stdout = old // restoring the real stdout
 	out := <-outC
 
@@ -102,7 +107,9 @@ func TestNotificationServiceTransformer_ExtraAttributes(t *testing.T) {
 
 	resultBody, err := transformer.Transform(traceID, body)
 	notifResult := &notification{}
-	json.Unmarshal(resultBody, &notifResult)
+	if err := json.Unmarshal(resultBody, &notifResult); err != nil {
+		t.Errorf("Failed to unmarshal JSON: %v", err)
+	}
 
 	assert.Nil(t, err)
 	assert.Contains(t, notifResult.Attributes, "key1")

@@ -11,7 +11,9 @@ import (
 func Test_GetHostnameWithEnvVar(t *testing.T) {
 	testName := "test-node-name"
 
-	os.Setenv("HOSTNAME", testName)
+	if err := os.Setenv("HOSTNAME", testName); err != nil {
+		t.Errorf("Failed to set environment variable: %v", err)
+	}
 
 	hostname := system.GetHostname()
 

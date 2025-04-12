@@ -13,7 +13,11 @@ import (
 
 func TestNetlinkClient_KeepConnection(t *testing.T) {
 	n := makeNelinkClient(t)
-	defer syscall.Close(n.fd)
+	defer func() {
+		if err := syscall.Close(n.fd); err != nil {
+			t.Errorf("Failed to close syscall fd: %v", err)
+		}
+	}()
 
 	n.KeepConnection()
 	msg, err := n.Receive()
@@ -45,7 +49,11 @@ func TestNetlinkClient_SendReceive(t *testing.T) {
 
 	// Build our client
 	n := makeNelinkClient(t)
-	defer syscall.Close(n.fd)
+	defer func() {
+		if err := syscall.Close(n.fd); err != nil {
+			t.Errorf("Failed to close syscall fd: %v", err)
+		}
+	}()
 
 	// Make sure we can encode/decode properly
 	payload := &AuditStatusPayload{
@@ -74,7 +82,9 @@ func TestNetlinkClient_SendReceive(t *testing.T) {
 	assert.Equal(t, uint32(2), msg.Header.Seq, "Header.Seq did not increment")
 
 	// Make sure 0 length packets result in an error
-	syscall.Sendto(n.fd, []byte{}, 0, n.address)
+	if err := syscall.Sendto(n.fd, []byte{}, 0, n.address); err != nil {
+		t.Errorf("Failed to send data: %v", err)
+	}
 	_, err = n.Receive()
 	assert.Equal(t, "Got a 0 length packet", err.Error(), "Error was incorrect")
 
@@ -112,7 +122,9 @@ func TestNewNetlinkClient(t *testing.T) {
 
 // Helper to make a client listening on a unix socket
 func makeNelinkClient(t *testing.T) *NetlinkClient {
-	os.Remove("pauditd.test.sock")
+	if err := os.Remove("pauditd.test.sock"); err != nil {
+		t.Errorf("Failed to remove test socket: %v", err)
+	}
 	fd, err := syscall.Socket(syscall.AF_UNIX, syscall.SOCK_RAW, 0)
 	if err != nil {
 		t.Fatal("Could not create a socket:", err)
