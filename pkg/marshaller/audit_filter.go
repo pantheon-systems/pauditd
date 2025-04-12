@@ -23,6 +23,7 @@ func (f FilterAction) String() string {
 	return "drop"
 }
 
+// AuditFilter represents a filter for audit messages.
 type AuditFilter struct {
 	MessageType uint16
 	Regex       *regexp.Regexp

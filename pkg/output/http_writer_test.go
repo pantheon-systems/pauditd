@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/alexcesaro/statsd.v2"
@@ -154,7 +154,7 @@ func TestHTTPWriter_process(t *testing.T) {
 	go writer.Process(context.Background())
 
 	if waitTimeout(wg, 15*time.Second) {
-		assert.FailNow(t, "Did not recieve call to test service within timeout")
+		assert.FailNow(t, "Did not receive call to test service within timeout")
 	}
 
 	assert.NotEmpty(t, traceID)
