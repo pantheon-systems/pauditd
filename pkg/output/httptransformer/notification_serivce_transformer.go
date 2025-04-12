@@ -1,3 +1,4 @@
+// Package httptransformer provides utilities for transforming HTTP response bodies.
 package httptransformer
 
 import (

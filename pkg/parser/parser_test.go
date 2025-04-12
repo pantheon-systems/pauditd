@@ -19,9 +19,9 @@ func (r *TestUsernameResolver) Resolve(uid string) string {
 }
 
 func TestAuditConstants(t *testing.T) {
-	assert.Equal(t, 7, HEADER_MIN_LENGTH)
-	assert.Equal(t, 6, HEADER_START_POS)
-	assert.Equal(t, time.Second*2, COMPLETE_AFTER)
+	assert.Equal(t, 7, HeaderMinLength)
+	assert.Equal(t, 6, HeaderStartPos)
+	assert.Equal(t, time.Second*2, CompleteAfter)
 	assert.Equal(t, []byte{")"[0]}, headerEndChar)
 }
 
@@ -62,8 +62,8 @@ func TestAuditMessageGroup_AddMessage(t *testing.T) {
 		Seq:           1,
 		AuditTime:     "ok",
 		RuleKey:       "testkey",
-		CompleteAfter: time.Now().Add(COMPLETE_AFTER),
-		UidMap:        make(map[string]string, 2),
+		CompleteAfter: time.Now().Add(CompleteAfter),
+		UIDMap:        make(map[string]string, 2),
 	}
 
 	m := &AuditMessage{
@@ -73,9 +73,9 @@ func TestAuditMessageGroup_AddMessage(t *testing.T) {
 	amg.AddMessage(m)
 	assert.Equal(t, 1, len(amg.Msgs), "Expected 1 message")
 	assert.Equal(t, m, amg.Msgs[0], "First message was wrong")
-	assert.Equal(t, 1, len(amg.UidMap), "Incorrect uid mapping count")
+	assert.Equal(t, 1, len(amg.UIDMap), "Incorrect uid mapping count")
 	assert.Equal(t, "testkey", amg.RuleKey, "Testkey did not get set")
-	assert.Equal(t, "hi", amg.UidMap["0"])
+	assert.Equal(t, "hi", amg.UIDMap["0"])
 
 	// Make sure we don't parse uids for message types that don't have them
 	m = &AuditMessage{
@@ -85,7 +85,7 @@ func TestAuditMessageGroup_AddMessage(t *testing.T) {
 	amg.AddMessage(m)
 	assert.Equal(t, 2, len(amg.Msgs), "Expected 2 messages")
 	assert.Equal(t, m, amg.Msgs[1], "2nd message was wrong")
-	assert.Equal(t, 1, len(amg.UidMap), "Incorrect uid mapping count")
+	assert.Equal(t, 1, len(amg.UIDMap), "Incorrect uid mapping count")
 
 	m = &AuditMessage{
 		Type: uint16(1307),
@@ -94,7 +94,7 @@ func TestAuditMessageGroup_AddMessage(t *testing.T) {
 	amg.AddMessage(m)
 	assert.Equal(t, 3, len(amg.Msgs), "Expected 2 messages")
 	assert.Equal(t, m, amg.Msgs[2], "3rd message was wrong")
-	assert.Equal(t, 1, len(amg.UidMap), "Incorrect uid mapping count")
+	assert.Equal(t, 1, len(amg.UIDMap), "Incorrect uid mapping count")
 }
 
 func TestNewAuditMessageGroup(t *testing.T) {
@@ -112,11 +112,11 @@ func TestNewAuditMessageGroup(t *testing.T) {
 	assert.True(t, amg.CompleteAfter.After(time.Now()), "Complete after time should be greater than right now")
 	assert.Equal(t, 6, cap(amg.Msgs), "Msgs capacity should be 6")
 	assert.Equal(t, 1, len(amg.Msgs), "Msgs should only have 1 message")
-	assert.Equal(t, 0, len(amg.UidMap), "No uids in the original message")
+	assert.Equal(t, 0, len(amg.UIDMap), "No uids in the original message")
 	assert.Equal(t, m, amg.Msgs[0], "First message should be the original")
 }
 
-func TestAuditMessageGroup_mapUids(t *testing.T) {
+func TestAuditMessageGroup_mapper(t *testing.T) {
 	ActiveUsernameResolver = &TestUsernameResolver{
 		fixtureUIDMap: map[string]string{
 			"0":     "hi",
@@ -130,21 +130,21 @@ func TestAuditMessageGroup_mapUids(t *testing.T) {
 	amg := &AuditMessageGroup{
 		Seq:           1,
 		AuditTime:     "ok",
-		CompleteAfter: time.Now().Add(COMPLETE_AFTER),
-		UidMap:        make(map[string]string, 2),
+		CompleteAfter: time.Now().Add(CompleteAfter),
+		UIDMap:        make(map[string]string, 2),
 	}
 
 	m := &AuditMessage{
 		Data: "uid=0 1uid=1 2uid=2 3uid=3 key=testkey not here 4uid=99999",
 	}
-	amg.mapUids(m)
+	amg.mapper(m)
 
-	assert.Equal(t, 5, len(amg.UidMap), "Uid map is too big")
-	assert.Equal(t, "hi", amg.UidMap["0"])
-	assert.Equal(t, "there", amg.UidMap["1"])
-	assert.Equal(t, "fun", amg.UidMap["2"])
-	assert.Equal(t, "test", amg.UidMap["3"])
-	assert.Equal(t, "derp", amg.UidMap["99999"])
+	assert.Equal(t, 5, len(amg.UIDMap), "Uid map is too big")
+	assert.Equal(t, "hi", amg.UIDMap["0"])
+	assert.Equal(t, "there", amg.UIDMap["1"])
+	assert.Equal(t, "fun", amg.UIDMap["2"])
+	assert.Equal(t, "test", amg.UIDMap["3"])
+	assert.Equal(t, "derp", amg.UIDMap["99999"])
 }
 
 func TestAuditMessageGroup_findDataFiles(t *testing.T) {

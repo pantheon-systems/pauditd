@@ -10,12 +10,12 @@ import (
 
 type TestRegisterTransformer struct{}
 
-func NewTestRegisterTransformer(config *viper.Viper) ResponseBodyTransformer {
+func NewTestRegisterTransformer(_ *viper.Viper) ResponseBodyTransformer {
 	return &TestRegisterTransformer{}
 }
 
-func (t TestRegisterTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
-	return nil, nil
+func (t TestRegisterTransformer) Transform(_ uuid.UUID, body []byte) ([]byte, error) {
+	return body, nil
 }
 
 func TestResponseBodyTransformerRegisterAndDefault(t *testing.T) {

@@ -1,3 +1,4 @@
+// Package marshaller provides utilities for parsing and filtering audit messages.
 package marshaller
 
 import (
@@ -8,11 +9,13 @@ import (
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
+// FilterAction represents the action to take on an audit message (keep or drop).
 type FilterAction bool
 
+// Constants defining possible filter actions.
 const (
-	Keep FilterAction = false
-	Drop FilterAction = true
+	Keep FilterAction = false // Keep the audit message.
+	Drop FilterAction = true  // Drop the audit message.
 )
 
 func (f FilterAction) String() string {
@@ -32,6 +35,7 @@ type AuditFilter struct {
 	Action      FilterAction
 }
 
+// NewAuditFilter creates a new AuditFilter based on the provided rule number and configuration object.
 func NewAuditFilter(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
 	var err error
 
@@ -90,8 +94,10 @@ func parse(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
 			}
 		case "syscall":
 			if af.Syscall, ok = v.(string); ok {
-				// All is good
-			} else if ev, ok := v.(int); ok {
+				// Do nothing; Syscall is already a string.
+				break
+			}
+			if ev, ok := v.(int); ok {
 				af.Syscall = strconv.Itoa(ev)
 			} else {
 				return nil, fmt.Errorf("`syscall` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)

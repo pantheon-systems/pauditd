@@ -1,3 +1,5 @@
+// Package main is the entry point for the pauditd application.
+// It sets up configuration, audit rules, and processes audit events.
 package main
 
 import (

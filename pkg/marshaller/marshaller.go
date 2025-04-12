@@ -11,10 +11,10 @@ import (
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
-const (
-	EVENT_EOE = 1320 // End of multi packet event
-)
+// EventEOE represents the end of a multi-packet event in the audit system.
+const EventEOE = 1320
 
+// AuditMarshaller processes and filters audit messages before writing them to the output.
 type AuditMarshaller struct {
 	msgs          map[int]*parser.AuditMessageGroup
 	writer        *output.AuditWriter
@@ -30,7 +30,8 @@ type AuditMarshaller struct {
 	filters       map[string]map[uint16][]*AuditFilter // { syscall: { mtype: [regexp, ...] } }
 }
 
-// Create a new marshaller
+// NewAuditMarshaller creates a new AuditMarshaller instance.
+// It initializes the message tracking, filters, and output writer.
 func NewAuditMarshaller(w *output.AuditWriter, eventMin uint16, eventMax uint16, trackMessages, logOOO bool, maxOOO int, filters []AuditFilter) *AuditMarshaller {
 	am := AuditMarshaller{
 		writer:        w,
@@ -48,7 +49,8 @@ func NewAuditMarshaller(w *output.AuditWriter, eventMin uint16, eventMax uint16,
 	return &am
 }
 
-// Ingests a netlink message and likely prepares it to be logged
+// Consume ingests a netlink message, processes it, and prepares it for logging.
+// It handles message sequencing, filtering, and multi-packet events.
 func (a *AuditMarshaller) Consume(nlMsg *syscall.NetlinkMessage) {
 	aMsg := parser.NewAuditMessage(nlMsg)
 
@@ -63,10 +65,10 @@ func (a *AuditMarshaller) Consume(nlMsg *syscall.NetlinkMessage) {
 	}
 
 	if nlMsg.Header.Type < a.eventMin || nlMsg.Header.Type > a.eventMax {
-		// Drop all audit messages that aren't things we care about or end a multi packet event
+		// Drop all audit messages that aren't things we care about or end a multi-packet event
 		a.flushOld()
 		return
-	} else if nlMsg.Header.Type == EVENT_EOE {
+	} else if nlMsg.Header.Type == EventEOE {
 		// This is end of event msg, flush the msg with that sequence and discard this one
 		a.completeMessage(aMsg.Seq)
 		return

@@ -56,30 +56,29 @@ func Test_setRules(t *testing.T) {
 	// fail to flush rules
 	config := viper.New()
 
-	err := setRules(config, func(s string, a ...string) error {
-		if s == "auditctl" && a[0] == "-D" {
+	err := setRules(config, func(_ string, a ...string) error {
+
+		// auditctl
+		if a[0] == "-D" {
 			return errors.New("testing")
 		}
-
 		return nil
 	})
 
 	assert.EqualError(t, err, "Failed to flush existing audit rules. Error: testing")
 
 	// fail on 0 rules
-	err = setRules(config, func(s string, a ...string) error { return nil })
+	err = setRules(config, func(_ string, _ ...string) error { return nil })
 	assert.EqualError(t, err, "No audit rules found")
 
 	// failure to set rule
 	r := 0
 	config.Set("rules", []string{"-a -1 -2", "", "-a -3 -4"})
-	err = setRules(config, func(s string, a ...string) error {
+	err = setRules(config, func(_ string, a ...string) error {
 		if a[0] != "-D" {
 			return errors.New("testing rule")
 		}
-
 		r++
-
 		return nil
 	})
 
@@ -88,7 +87,7 @@ func Test_setRules(t *testing.T) {
 
 	// properly set rules
 	r = 0
-	err = setRules(config, func(s string, a ...string) error {
+	err = setRules(config, func(_ string, a ...string) error {
 		// Skip the flush rules
 		if a[0] != "-a" {
 			return nil
@@ -374,7 +373,7 @@ func Benchmark_MultiPacketMessage(b *testing.B) {
 
 type noopWriter struct{ t *testing.T }
 
-func (t *noopWriter) Write(a []byte) (int, error) {
+func (t *noopWriter) Write(_ []byte) (int, error) {
 	return 0, nil
 }
 

@@ -19,7 +19,7 @@ var transformerFunctionWasCalled = false
 
 type TestTransformer struct{}
 
-func (t TestTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
+func (t TestTransformer) Transform(_ uuid.UUID, body []byte) ([]byte, error) {
 	transformerFunctionWasCalled = true
 	return body, nil
 }
@@ -123,7 +123,7 @@ func TestHTTPWriter_process(t *testing.T) {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/", func(_ http.ResponseWriter, r *http.Request) {
 		receivedPost = true
 		body, _ = ioutil.ReadAll(r.Body)
 		byteCount = r.ContentLength

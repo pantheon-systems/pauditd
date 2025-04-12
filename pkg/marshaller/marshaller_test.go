@@ -17,7 +17,7 @@ import (
 )
 
 func TestMarshallerConstants(t *testing.T) {
-	assert.Equal(t, 1320, EVENT_EOE)
+	assert.Equal(t, 1320, EventEOE)
 }
 
 func TestAuditMarshaller_Consume(t *testing.T) {
@@ -285,6 +285,6 @@ func new1320(seq string) *syscall.NetlinkMessage {
 
 type FailWriter struct{}
 
-func (f *FailWriter) Write(p []byte) (n int, err error) {
+func (f *FailWriter) Write(_ []byte) (n int, err error) {
 	return 0, errors.New("derp")
 }

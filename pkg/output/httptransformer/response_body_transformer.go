@@ -42,11 +42,11 @@ func GetResponseBodyTransformer(name string, config *viper.Viper) ResponseBodyTr
 type NoopTransformer struct{}
 
 // NewNoopTransformer creates new transformer that does nothing
-func NewNoopTransformer(config *viper.Viper) ResponseBodyTransformer {
-	return &NoopTransformer{}
+func NewNoopTransformer(_ *viper.Viper) ResponseBodyTransformer {
+	return NoopTransformer{}
 }
 
 // Transform is a noop for the NoopTransformer
-func (t NoopTransformer) Transform(traceID uuid.UUID, body []byte) ([]byte, error) {
+func (t NoopTransformer) Transform(_ uuid.UUID, body []byte) ([]byte, error) {
 	return body, nil
 }

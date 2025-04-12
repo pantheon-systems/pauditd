@@ -1,3 +1,4 @@
+// Package system provides utilities for interacting with system-level data.
 package system
 
 import (
@@ -8,8 +9,8 @@ const (
 	hostnameEnv string = "HOSTNAME"
 )
 
-// GetHostname retrieves the hostname of the system, if no hostname
-// is available we return empty string
+// GetHostname retrieves the hostname of the system. If no hostname
+// is available, it returns an empty string.
 func GetHostname() string {
 	var err error
 

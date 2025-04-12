@@ -1,3 +1,4 @@
+// Package output provides utilities for creating and managing audit writers.
 package output
 
 import (

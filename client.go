@@ -16,10 +16,11 @@ import (
 var Endianness = binary.LittleEndian
 
 const (
-	// MAX_AUDIT_MESSAGE_LENGTH see http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L398
-	MAX_AUDIT_MESSAGE_LENGTH = 8970
+	// MaxAuditMessageLength see http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L398
+	MaxAuditMessageLength = 8970
 )
 
+// AuditStatusPayload represents the payload for audit status
 // TODO: this should live in a marshaller
 type AuditStatusPayload struct {
 	Mask            uint32
@@ -37,6 +38,7 @@ type AuditStatusPayload struct {
 // NetlinkPacket is an alias to give the header a similar name here
 type NetlinkPacket syscall.NlMsghdr
 
+// NetlinkClient handles communication with the netlink socket.
 type NetlinkClient struct {
 	fd                   int
 	address              syscall.Sockaddr
@@ -55,7 +57,7 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	n := &NetlinkClient{
 		fd:                   fd,
 		address:              &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: 0, Pid: 0},
-		buf:                  make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
+		buf:                  make([]byte, MaxAuditMessageLength),
 		cancelKeepConnection: make(chan struct{}),
 	}
 
