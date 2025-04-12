@@ -75,7 +75,6 @@ func parse(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
 
 			} else if ev, ok := v.(int); ok {
 				af.MessageType = uint16(ev)
-
 			} else {
 				return nil, fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
 			}

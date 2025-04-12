@@ -100,7 +100,7 @@ func (a *AuditMarshaller) completeMessage(seq int) {
 	var ok bool
 
 	if msg, ok = a.msgs[seq]; !ok {
-		//TODO: attempted to complete a missing message, log?
+		// TODO: attempted to complete a missing message, log?
 		return
 	}
 

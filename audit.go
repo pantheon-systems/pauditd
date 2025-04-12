@@ -199,7 +199,7 @@ func main() {
 
 	slog.Info.Printf("Started processing events in the range [%d, %d]\n", config.GetInt("events.min"), config.GetInt("events.max"))
 
-	//Main loop. Get data from netlink and send it to the json lib for processing
+	// Main loop. Get data from netlink and send it to the json lib for processing
 	for {
 		msg, err := nlClient.Receive()
 		timing := metric.GetClient().NewTiming() // measure latency from recipt of message

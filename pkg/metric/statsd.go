@@ -16,9 +16,7 @@ const (
 	defaultStatsdSampleRate = 0.5
 )
 
-var (
-	client *statsd.Client
-)
+var client *statsd.Client
 
 func Shutdown() {
 	client.Close()

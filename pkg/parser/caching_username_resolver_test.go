@@ -43,7 +43,7 @@ func Test_testCheckCache(t *testing.T) {
 	filepath := path.Join(os.TempDir(), "test-passwd")
 	f, _ := os.OpenFile(
 		filepath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600,
 	)
 	defer f.Close()
 
@@ -81,7 +81,7 @@ func Test_rapid(t *testing.T) {
 	filepath := path.Join(os.TempDir(), "test-passwd")
 	f, _ := os.OpenFile(
 		filepath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600,
 	)
 
 	// setup test fixture file
@@ -126,6 +126,7 @@ func Benchmark_getUsernameNoCache(b *testing.B) {
 		_ = resolver.Resolve("0")
 	}
 }
+
 func Benchmark_getUsernameCache(b *testing.B) {
 	resolver := NewCachingUsernameResolver("")
 	for i := 0; i < b.N; i++ {

@@ -23,7 +23,6 @@ func newSyslogWriter(config *viper.Viper) (*AuditWriter, error) {
 		syslog.Priority(config.GetInt("output.syslog.priority")),
 		config.GetString("output.syslog.tag"),
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open syslog writer. Error: %v", err)
 	}

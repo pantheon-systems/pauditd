@@ -33,7 +33,6 @@ func newFileWriter(config *viper.Viper) (*AuditWriter, error) {
 		config.GetString("output.file.path"),
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, mode,
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open output file. Error: %s", err)
 	}

@@ -85,6 +85,7 @@ func TestNotificationServiceTransformerTransformNoRuleKeyStdout(t *testing.T) {
 	assert.Nil(t, resultBody)
 	assert.Nil(t, err)
 }
+
 func TestNotificationServiceTransformer_ExtraAttributes(t *testing.T) {
 	extraAttributes := map[string]string{
 		"key1": "value1",

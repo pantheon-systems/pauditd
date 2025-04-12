@@ -65,7 +65,6 @@ func (w *raceWriter) runWorker() {
 
 			// Call json.Marshal like HTTPWriter
 			_, err := json.Marshal(message)
-
 			if err != nil {
 				panic(err)
 			}

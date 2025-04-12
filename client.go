@@ -93,7 +93,7 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 
 // Send will send a packet and payload to the netlink socket without waiting for a response
 func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
-	//We need to get the length first. This is a bit wasteful, but requests are rare so yolo..
+	// We need to get the length first. This is a bit wasteful, but requests are rare so yolo..
 	buf := new(bytes.Buffer)
 	var length int
 
@@ -149,7 +149,7 @@ func (n *NetlinkClient) KeepConnection() {
 		Mask:    4,
 		Enabled: 1,
 		Pid:     uint32(syscall.Getpid()),
-		//TODO: Failure: http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L338
+		// TODO: Failure: http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L338
 	}
 
 	packet := &NetlinkPacket{

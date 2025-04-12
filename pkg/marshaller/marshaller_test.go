@@ -131,7 +131,7 @@ func TestAuditMarshaller_Consume(t *testing.T) {
 }
 
 func TestAuditMarshaller_completeMessage(t *testing.T) {
-	//TODO: cant test because completeMessage calls exit
+	// TODO: cant test because completeMessage calls exit
 	t.Skip()
 	return
 	// lb, elb := hookLogger()
@@ -191,7 +191,7 @@ func TestAuditMarshaller_dropMessage(t *testing.T) {
 			},
 		},
 	}
-	//result := m.dropMessage(message)
+	// result := m.dropMessage(message)
 	result := Drop
 	assert.Equal(t, Drop, result)
 

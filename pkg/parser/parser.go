@@ -62,7 +62,7 @@ type AuditMessageGroup struct {
 
 // Creates a new message group from the details parsed from the message
 func NewAuditMessageGroup(am *AuditMessage) *AuditMessageGroup {
-	//TODO: allocating 6 msgs per group is lame and we _should_ know ahead of time roughly how many we need
+	// TODO: allocating 6 msgs per group is lame and we _should_ know ahead of time roughly how many we need
 	amg := &AuditMessageGroup{
 		Seq:           am.Seq,
 		AuditTime:     am.AuditTime,
@@ -96,7 +96,7 @@ func parseAuditHeader(msg *syscall.NetlinkMessage) (time string, seq int) {
 
 	header := string(msg.Data[:headerStop])
 	if header[:HEADER_START_POS] == "audit(" {
-		//TODO: out of range check, possibly fully binary?
+		// TODO: out of range check, possibly fully binary?
 		sep := strings.IndexByte(header, headerSepChar)
 		time = header[HEADER_START_POS:sep]
 		seq, _ = strconv.Atoi(header[sep+1:])
@@ -112,7 +112,7 @@ func parseAuditHeader(msg *syscall.NetlinkMessage) (time string, seq int) {
 func (amg *AuditMessageGroup) AddMessage(am *AuditMessage) {
 	parseTimer := metric.GetClient().NewTiming()
 	amg.Msgs = append(amg.Msgs, am)
-	//TODO: need to find more message types that won't contain uids
+	// TODO: need to find more message types that won't contain uids
 	switch am.Type {
 	case AUDIT_EXECVE, AUDIT_CWD, AUDIT_SOCKADDR:
 		// Don't map uids here

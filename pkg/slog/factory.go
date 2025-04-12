@@ -5,8 +5,10 @@ import (
 	"os"
 )
 
-var Info *log.Logger
-var Error *log.Logger
+var (
+	Info  *log.Logger
+	Error *log.Logger
+)
 
 func init() {
 	Info = log.New(os.Stdout, "", 0)

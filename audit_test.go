@@ -140,7 +140,7 @@ func Test_createOutput(t *testing.T) {
 	c.Set("output.file.enabled", true)
 	c.Set("output.file.attempts", 1)
 	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	c.Set("output.file.mode", 0644)
+	c.Set("output.file.mode", 0o644)
 	c.Set("output.file.user", u.Username)
 	c.Set("output.file.group", g.Name)
 
@@ -320,7 +320,6 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, "testkey", f[0].Key)
 	assert.Empty(t, elb.String())
 	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", lb.String())
-
 }
 
 func Benchmark_MultiPacketMessage(b *testing.B) {
@@ -376,7 +375,7 @@ func (t *noopWriter) Write(a []byte) (int, error) {
 
 func createTempFile(t *testing.T, name string, contents string) string {
 	file := os.TempDir() + string(os.PathSeparator) + "pauditd." + name
-	if err := ioutil.WriteFile(file, []byte(contents), os.FileMode(0644)); err != nil {
+	if err := ioutil.WriteFile(file, []byte(contents), os.FileMode(0o644)); err != nil {
 		t.Fatal("Failed to create temp file", err)
 	}
 	return file
