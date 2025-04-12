@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
+
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 func init() {

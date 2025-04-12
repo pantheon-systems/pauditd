@@ -1,12 +1,13 @@
 package parser
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_resolveCacheEnabled(t *testing.T) {

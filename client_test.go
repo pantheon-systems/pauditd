@@ -7,8 +7,9 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 func TestNetlinkClient_KeepConnection(t *testing.T) {

@@ -10,13 +10,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pantheon-systems/pauditd/pkg/metric"
-	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 const (

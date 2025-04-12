@@ -1,10 +1,10 @@
 package httptransformer
 
 import (
-	"github.com/spf13/viper"
 	"testing"
 
 	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 

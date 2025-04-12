@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
+
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 // AuditWriterFactory is the that represents a function that is a audit writer factory

@@ -2,12 +2,13 @@ package metric
 
 import (
 	"fmt"
-	"github.com/pantheon-systems/pauditd/pkg/system"
 	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
+
+	"github.com/pantheon-systems/pauditd/pkg/system"
 )
 
 const (

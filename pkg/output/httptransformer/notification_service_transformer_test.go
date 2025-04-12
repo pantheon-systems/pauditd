@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/metric"
-	"github.com/spf13/viper"
-
 	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 )
 
 func TestNotificationServiceTransformerRegisteration(t *testing.T) {

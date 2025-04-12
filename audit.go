@@ -9,12 +9,13 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/spf13/viper"
+
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
-	"github.com/spf13/viper"
 )
 
 type executor func(string, ...string) error

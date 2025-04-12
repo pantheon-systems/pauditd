@@ -9,10 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/pantheon-systems/certinel"
 	"github.com/pantheon-systems/certinel/pollwatcher"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
-	"github.com/spf13/viper"
 )
 
 const (

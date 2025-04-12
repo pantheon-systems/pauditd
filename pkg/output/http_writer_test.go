@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/alexcesaro/statsd.v2"
+
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 )
 
 var transformerFunctionWasCalled = false

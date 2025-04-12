@@ -7,12 +7,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/pantheon-systems/pauditd/pkg/system"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
-
-	uuid "github.com/satori/go.uuid"
+	"github.com/pantheon-systems/pauditd/pkg/system"
 )
 
 // NotificationServiceTransformer transforms the body of an HTTP Writer and handles the logic

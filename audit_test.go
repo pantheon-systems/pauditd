@@ -11,18 +11,22 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/metric"
-
-	"github.com/pantheon-systems/pauditd/pkg/marshaller"
-	"github.com/pantheon-systems/pauditd/pkg/output"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/pantheon-systems/pauditd/pkg/marshaller"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
+	"github.com/pantheon-systems/pauditd/pkg/output"
+	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			slog.Error.Println("Failed to remove file:", err)
+		}
+	}()
 
 	// defaults
 	config, err := loadConfig(file)
