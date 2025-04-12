@@ -37,7 +37,9 @@ func TestNetlinkClient_KeepConnection(t *testing.T) {
 	// Make sure we get errors printed
 	lb, elb := hookLogger()
 	defer resetLogger()
-	syscall.Close(n.fd)
+	if err := syscall.Close(n.fd); err != nil {
+		t.Errorf("Failed to close syscall fd: %v", err)
+	}
 	n.KeepConnection()
 	assert.Equal(t, "", lb.String(), "Got some log lines we did not expect")
 	assert.Equal(t, "Error occurred while trying to keep the connection: bad file descriptor\n", elb.String(), "Figured we would have an error")
@@ -89,7 +91,9 @@ func TestNetlinkClient_SendReceive(t *testing.T) {
 	assert.Equal(t, "Got a 0 length packet", err.Error(), "Error was incorrect")
 
 	// Make sure we get errors from sendto back
-	syscall.Close(n.fd)
+	if err := syscall.Close(n.fd); err != nil {
+		t.Errorf("Failed to close syscall fd: %v", err)
+	}
 	err = n.Send(packet, payload)
 	assert.Equal(t, "bad file descriptor", err.Error(), "Error was incorrect")
 
@@ -137,7 +141,9 @@ func makeNelinkClient(t *testing.T) *NetlinkClient {
 	}
 
 	if err = syscall.Bind(fd, n.address); err != nil {
-		syscall.Close(fd)
+		if err := syscall.Close(fd); err != nil {
+			t.Errorf("Failed to close socket fd after bind error: %v", err)
+		}
 		t.Fatal("Could not bind to netlink socket:", err)
 	}
 

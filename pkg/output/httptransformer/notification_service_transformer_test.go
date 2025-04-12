@@ -21,7 +21,9 @@ func TestNotificationServiceTransformerRegisteration(t *testing.T) {
 func TestNotificationServiceTransformerTransform(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	transformer := NotificationServiceTransformer{
 		hostname: "test-hostname",
@@ -40,7 +42,9 @@ func TestNotificationServiceTransformerTransform(t *testing.T) {
 func TestNotificationServiceTransformerTransformNoRuleKeyIgnore(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	transformer := NotificationServiceTransformer{
 		hostname:        "test-hostname",

@@ -47,7 +47,9 @@ func TestNewAuditMessage(t *testing.T) {
 func TestAuditMessageGroup_AddMessage(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	ActiveUsernameResolver = &TestUsernameResolver{
 		fixtureUIDMap: map[string]string{

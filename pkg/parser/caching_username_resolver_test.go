@@ -99,7 +99,9 @@ func Test_rapid(t *testing.T) {
 	}()
 
 	// setup test fixture file
-	f.Write([]byte{})
+	if _, err := f.Write([]byte{}); err != nil {
+		t.Errorf("Failed to write to file: %v", err)
+	}
 
 	// prime cache with values for test
 	resolver := &CachingUsernameResolver{

@@ -31,7 +31,11 @@ func Test_newSyslogWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer l.Close()
+	defer func() {
+		if err := l.Close(); err != nil {
+			t.Errorf("Failed to close listener: %v", err)
+		}
+	}()
 
 	c = viper.New()
 	c.Set("output.syslog.attempts", 1)
