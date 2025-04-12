@@ -9,11 +9,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/pantheon-systems/certinel"
 	"github.com/pantheon-systems/certinel/pollwatcher"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -77,8 +76,7 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 
 	sentinel.Watch()
 
-	var caCerts *x509.CertPool
-	caCerts = x509.NewCertPool()
+	var caCerts *x509.CertPool = x509.NewCertPool()
 	caCert, err := ioutil.ReadFile(c.caCertPath)
 	caCerts.AppendCertsFromPEM(caCert)
 	if err != nil {

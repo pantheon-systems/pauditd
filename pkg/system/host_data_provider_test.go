@@ -4,9 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/pantheon-systems/pauditd/pkg/system"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_GetHostnameWithEnvVar(t *testing.T) {

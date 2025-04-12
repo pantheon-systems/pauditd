@@ -1,7 +1,7 @@
 package httptransformer
 
 import (
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 )
 
@@ -38,7 +38,7 @@ func GetResponseBodyTransformer(name string, config *viper.Viper) ResponseBodyTr
 }
 
 // NoopTransformer is the concrete type for ResponseBodyTransformer that
-// does nothing (DEFUALT)
+// does nothing (DEFAULT)
 type NoopTransformer struct{}
 
 // NewNoopTransformer creates new transformer that does nothing

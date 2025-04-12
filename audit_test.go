@@ -11,13 +11,12 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_loadConfig(t *testing.T) {

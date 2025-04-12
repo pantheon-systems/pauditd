@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/pantheon-systems/pauditd/pkg/metric"
 )
 
 type TestUsernameResolver struct {

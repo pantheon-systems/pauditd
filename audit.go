@@ -9,13 +9,12 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/spf13/viper"
-
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
 	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/spf13/viper"
 )
 
 type executor func(string, ...string) error
@@ -88,7 +87,7 @@ func createOutput(config *viper.Viper) (*output.AuditWriter, error) {
 
 	for _, auditWriterName := range output.GetAvailableAuditWriters() {
 		configName := "output." + auditWriterName + ".enabled"
-		if config.GetBool(configName) == true {
+		if config.GetBool(configName) {
 			enabledCount++
 			writer, err = output.CreateAuditWriter(auditWriterName, config)
 			if err != nil {

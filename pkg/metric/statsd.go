@@ -5,10 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pantheon-systems/pauditd/pkg/system"
 	"github.com/spf13/viper"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
-
-	"github.com/pantheon-systems/pauditd/pkg/system"
 )
 
 const (

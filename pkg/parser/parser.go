@@ -175,7 +175,7 @@ func (amg *AuditMessageGroup) mapUids(am *AuditMessage) {
 
 func (amg *AuditMessageGroup) findRuleKey(am *AuditMessage) {
 	ruleKey := amg.findDataField("key", MAX_AUDIT_RULE_KEY_LENGTH, am.Data)
-	amg.RuleKey = strings.Replace(ruleKey, "\"", "", -1)
+	amg.RuleKey = strings.ReplaceAll(ruleKey, "\"", "")
 }
 
 func (amg *AuditMessageGroup) findSyscall(am *AuditMessage) {

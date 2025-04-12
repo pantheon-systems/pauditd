@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/spf13/viper"
-
 	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/spf13/viper"
 )
 
 func init() {
