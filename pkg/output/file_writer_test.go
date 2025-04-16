@@ -1,7 +1,6 @@
 package output
 
 import (
-	"errors"
 	"os"
 	"os/user"
 	"path"
@@ -13,11 +12,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
-
-// Mock os.File.Chown
-var mockChown = func(file *os.File, uid, gid int) error {
-	return errors.New("operation not permitted")
-}
 
 func Test_newFileWriter(t *testing.T) {
 	testCases := []struct {

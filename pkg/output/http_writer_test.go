@@ -131,7 +131,7 @@ func TestHTTPWriter_process(t *testing.T) {
 	wg.Add(1)
 
 	// Start the test HTTP server
-	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	testServer := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 		mu.Lock()
 		defer mu.Unlock()
