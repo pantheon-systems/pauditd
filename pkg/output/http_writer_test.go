@@ -2,7 +2,6 @@ package output
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -194,20 +193,5 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 		return false // completed normally
 	case <-time.After(timeout):
 		return true // timed out
-	}
-}
-
-func waitForServer(url string, timeout time.Duration) error {
-	start := time.Now()
-	for {
-		resp, err := http.Get(url)
-		if err == nil {
-			resp.Body.Close()
-			return nil
-		}
-		if time.Since(start) > timeout {
-			return fmt.Errorf("server did not start within %v: %v", timeout, err)
-		}
-		time.Sleep(100 * time.Millisecond)
 	}
 }
