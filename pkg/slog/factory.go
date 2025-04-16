@@ -1,19 +1,19 @@
 package slog
 
 import (
-	"log"
+	"log/slog"
 	"os"
 )
 
-var Info *log.Logger
-var Error *log.Logger
+var Info *slog.Logger
+var Error *slog.Logger
 
 func init() {
-	Info = log.New(os.Stdout, "", 0)
-	Error = log.New(os.Stderr, "", 0)
+    Info = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+    Error = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 }
 
-func Configure(flags int) {
-	Info.SetFlags(flags)
-	Error.SetFlags(flags)
+func Configure(level slog.Level) {
+    Info = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
+    Error = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 }
