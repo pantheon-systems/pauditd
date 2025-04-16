@@ -369,9 +369,9 @@ func Benchmark_MultiPacketMessage(b *testing.B) {
 	}
 }
 
-type noopWriter struct{ t *testing.T }
+type noopWriter struct{}
 
-func (t *noopWriter) Write(_ []byte) (int, error) {
+func (n *noopWriter) Write(_ []byte) (int, error) {
 	return 0, nil
 }
 

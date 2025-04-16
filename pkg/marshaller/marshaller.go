@@ -28,7 +28,7 @@ type AuditMarshaller struct {
 	trackMessages bool
 	logOutOfOrder bool
 	maxOutOfOrder int
-	attempts      int
+	attempts      int                                  // nolint:unused
 	filters       map[string]map[uint16][]*AuditFilter // { syscall: { mtype: [regexp, ...] } }
 }
 
