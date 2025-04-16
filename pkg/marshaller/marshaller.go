@@ -15,6 +15,8 @@ import (
 const EventEOE = 1320
 
 // AuditMarshaller processes and filters audit messages before writing them to the output.
+// TODO: Consider refactoring the AuditMarshaller struct to accept a metric.Client
+// as a dependency. This would make it easier to inject a mock client in tests.
 type AuditMarshaller struct {
 	msgs          map[int]*parser.AuditMessageGroup
 	writer        *output.AuditWriter
