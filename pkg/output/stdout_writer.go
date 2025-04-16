@@ -15,7 +15,7 @@ func init() {
 func newStdOutWriter(config *viper.Viper) (*AuditWriter, error) {
 	attempts := config.GetInt("output.stdout.attempts")
 	if attempts < 1 {
-		return nil, fmt.Errorf("Output attempts for stdout must be at least 1, %v provided", attempts)
+		return nil, fmt.Errorf("output attempts for stdout must be at least 1, %v provided", attempts)
 	}
 
 	// info logger is no longer stdout

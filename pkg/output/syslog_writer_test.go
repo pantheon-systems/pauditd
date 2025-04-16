@@ -14,7 +14,7 @@ func Test_newSyslogWriter(t *testing.T) {
 	c := viper.New()
 	c.Set("output.syslog.attempts", 0)
 	w, err := newSyslogWriter(c)
-	assert.EqualError(t, err, "Output attempts for syslog must be at least 1, 0 provided")
+	assert.EqualError(t, err, "output attempts for syslog must be at least 1, 0 provided")
 	assert.Nil(t, w)
 
 	// dial error
@@ -22,7 +22,7 @@ func Test_newSyslogWriter(t *testing.T) {
 	c.Set("output.syslog.attempts", 1)
 	c.Set("output.syslog.priority", -1)
 	w, err = newSyslogWriter(c)
-	assert.EqualError(t, err, "Failed to open syslog writer. Error: log/syslog: invalid priority")
+	assert.EqualError(t, err, "failed to open syslog writer. Error: log/syslog: invalid priority")
 	assert.Nil(t, w)
 
 	// All good

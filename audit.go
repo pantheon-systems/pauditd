@@ -56,7 +56,7 @@ func loadConfig(configFile string) (*viper.Viper, error) {
 func setRules(config *viper.Viper, e executor) error {
 	// Clear existing rules
 	if err := e("auditctl", "-D"); err != nil {
-		return fmt.Errorf("Failed to flush existing audit rules. Error: %s", err)
+		return fmt.Errorf("failed to flush existing audit rules. Error: %s", err)
 	}
 
 	slog.Info.Println("Flushed existing audit rules")
@@ -70,13 +70,13 @@ func setRules(config *viper.Viper, e executor) error {
 			}
 
 			if err := e("auditctl", strings.Fields(v)...); err != nil {
-				return fmt.Errorf("Failed to add rule #%d. Error: %s", i+1, err)
+				return fmt.Errorf("failed to add rule #%d. Error: %s", i+1, err)
 			}
 
 			slog.Info.Printf("Added audit rule #%d\n", i+1)
 		}
 	} else {
-		return errors.New("No audit rules found")
+		return errors.New("no audit rules found")
 	}
 
 	return nil
@@ -99,11 +99,11 @@ func createOutput(config *viper.Viper) (*output.AuditWriter, error) {
 	}
 
 	if enabledCount > 1 {
-		return nil, errors.New("Only one output can be enabled at a time")
+		return nil, errors.New("only one output can be enabled at a time")
 	}
 
 	if writer == nil {
-		return nil, errors.New("No outputs were configured")
+		return nil, errors.New("no outputs were configured")
 	}
 
 	return writer, nil
@@ -121,13 +121,13 @@ func createFilters(config *viper.Viper) ([]marshaller.AuditFilter, error) {
 
 	ft, ok := fs.([]interface{})
 	if !ok {
-		return filters, fmt.Errorf("Could not parse filters object")
+		return filters, fmt.Errorf("could not parse filters object")
 	}
 
 	for i, f := range ft {
 		f2, ok := f.(map[string]interface{})
 		if !ok {
-			return filters, fmt.Errorf("Could not parse filter %d; '%+v'", i+1, f)
+			return filters, fmt.Errorf("could not parse filter %d; '%+v'", i+1, f)
 		}
 		af, err := marshaller.NewAuditFilter(i+1, f2)
 		if err != nil {

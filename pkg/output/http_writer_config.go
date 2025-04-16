@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
 
@@ -76,8 +76,8 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 
 	sentinel.Watch()
 
-	var caCerts *x509.CertPool = x509.NewCertPool()
-	caCert, err := ioutil.ReadFile(c.caCertPath)
+	caCerts := x509.NewCertPool()
+	caCert, err := os.ReadFile(c.caCertPath)
 	caCerts.AppendCertsFromPEM(caCert)
 	if err != nil {
 		return nil, err

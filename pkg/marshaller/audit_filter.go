@@ -45,13 +45,13 @@ func NewAuditFilter(ruleNumber int, obj map[string]interface{}) (*AuditFilter, e
 	}
 
 	if af.Regex == nil {
-		return nil, fmt.Errorf("Filter %d is missing the `regex` entry", ruleNumber)
+		return nil, fmt.Errorf("filter %d is missing the `regex` entry", ruleNumber)
 	}
 
 	logMsg := fmt.Sprintf("%sing messages with key `%s` matching string `%s`\n", af.Action, af.Key, af.Regex.String())
 	if af.Key == "" {
 		if af.MessageType == 0 {
-			return nil, fmt.Errorf("Filter %d is missing either the `key` entry or `syscall` and `message_type` entry", ruleNumber)
+			return nil, fmt.Errorf("filter %d is missing either the `key` entry or `syscall` and `message_type` entry", ruleNumber)
 		}
 
 		logMsg = fmt.Sprintf("%sing syscall `%v` containing message type `%v` matching string `%s`\n", af.Action, af.Syscall, af.MessageType, af.Regex.String())

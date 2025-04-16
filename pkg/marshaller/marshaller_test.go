@@ -133,7 +133,6 @@ func TestAuditMarshaller_Consume(t *testing.T) {
 func TestAuditMarshaller_completeMessage(t *testing.T) {
 	// TODO: cant test because completeMessage calls exit
 	t.Skip()
-	return
 	// lb, elb := hookLogger()
 	// m := NewAuditMarshaller(NewAuditWriter(&FailWriter{}, 1), uint16(1300), uint16(1399), false, false, 0, []AuditFilter{})
 
