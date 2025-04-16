@@ -55,7 +55,7 @@ run_formatter() {
 run_linter() {
     local tool=$1
     echo "Running $tool (linter)..."
-    golangci-lint run --enable "$tool" ./...
+    golangci-lint run --enable-only "$tool" ./...
 }
 
 # Main function
