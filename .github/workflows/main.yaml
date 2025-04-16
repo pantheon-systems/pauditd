@@ -128,11 +128,10 @@ jobs:
         uses: ctrf-io/github-test-reporter@v1
         with:
           report-path: "./ctrf-report.json"
-          reporter: gotest-json
 
       - name: "Abort if tests failed"
         run: |
-          if grep '"Action":"fail"' ctrf-report.json; then
+          if jq -r '.results.tests[] | select(.status == "failed") | .name' ctrf-report.json | grep .; then
             echo "❌ Tests failed"
             exit 1
           fi
@@ -203,7 +202,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Download RPM Artifacts"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: build-artifacts
           path: dist
