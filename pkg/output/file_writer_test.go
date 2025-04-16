@@ -1,6 +1,7 @@
 package output
 
 import (
+	"errors"
 	"os"
 	"os/user"
 	"path"
@@ -13,70 +14,83 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Mock os.File.Chown
+var mockChown = func(file *os.File, uid, gid int) error {
+	return errors.New("operation not permitted")
+}
+
 func Test_newFileWriter(t *testing.T) {
-	// attempts error
-	c := viper.New()
-	c.Set("output.file.attempts", 0)
-	w, err := newFileWriter(c)
-	assert.EqualError(t, err, "Output attempts for file must be at least 1, 0 provided")
-	assert.Nil(t, w)
-
-	// failure to create/open file
-	c = viper.New()
-	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", "/do/not/exist/please")
-	c.Set("output.file.mode", 0o644)
-	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Failed to open output file. Error: open /do/not/exist/please: no such file or directory")
-	assert.Nil(t, w)
-
-	// chmod error
-	c = viper.New()
-	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Output file mode should be greater than 0000")
-	assert.Nil(t, w)
-
-	// uid error
-	c = viper.New()
-	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	c.Set("output.file.mode", 0o644)
-	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Could not find uid for user . Error: user: unknown user ")
-	assert.Nil(t, w)
-
-	uid := os.Getuid()
-	gid := os.Getgid()
-	u, _ := user.LookupId(strconv.Itoa(uid))
-	g, _ := user.LookupGroupId(strconv.Itoa(gid))
-
-	// travis-ci is silly
-	if u.Username == "" {
-		u.Username = g.Name
+	testCases := []struct {
+		name          string
+		config        *viper.Viper
+		expectedError string
+	}{
+		{
+			name: "attempts error",
+			config: func() *viper.Viper {
+				c := viper.New()
+				c.Set("output.file.attempts", 0)
+				return c
+			}(),
+			expectedError: "output attempts for file must be at least 1, 0 provided",
+		},
+		{
+			name: "failure to create/open file",
+			config: func() *viper.Viper {
+				c := viper.New()
+				c.Set("output.file.attempts", 1)
+				c.Set("output.file.path", "/do/not/exist/please")
+				c.Set("output.file.mode", 0o644)
+				return c
+			}(),
+			expectedError: "failed to open output file. Error: open /do/not/exist/please: no such file or directory",
+		},
+		{
+			name: "chmod error",
+			config: func() *viper.Viper {
+				c := viper.New()
+				c.Set("output.file.attempts", 1)
+				c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
+				c.Set("output.file.mode", 0)
+				return c
+			}(),
+			expectedError: "output file mode should be greater than 0000",
+		},
+		{
+			name: "uid error",
+			config: func() *viper.Viper {
+				c := viper.New()
+				c.Set("output.file.attempts", 1)
+				c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
+				c.Set("output.file.mode", 0o644)
+				c.Set("output.file.user", "nonexistentuser")
+				return c
+			}(),
+			expectedError: "could not find uid for user nonexistentuser. Error: user: unknown user nonexistentuser",
+		},
+		{
+			name: "gid error",
+			config: func() *viper.Viper {
+				c := viper.New()
+				c.Set("output.file.attempts", 1)
+				c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
+				c.Set("output.file.mode", 0o644)
+				c.Set("output.file.user", "root")
+				c.Set("output.file.group", "nonexistentgroup")
+				return c
+			}(),
+			expectedError: "could not find gid for group nonexistentgroup. Error: group: unknown group nonexistentgroup",
+		},
 	}
 
-	// gid error
-	c = viper.New()
-	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	c.Set("output.file.mode", 0o644)
-	c.Set("output.file.user", u.Username)
-	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Could not find gid for group . Error: group: unknown group ")
-	assert.Nil(t, w)
-
-	// chown error
-	c = viper.New()
-	c.Set("output.file.attempts", 1)
-	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	c.Set("output.file.mode", 0o644)
-	c.Set("output.file.user", "root")
-	c.Set("output.file.group", "root")
-	w, err = newFileWriter(c)
-	assert.EqualError(t, err, "Could not chown output file. Error: chown /tmp/pauditd.test.log: operation not permitted")
-	assert.Nil(t, w)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			w, err := newFileWriter(tc.config)
+			assert.Error(t, err)
+			assert.EqualError(t, err, tc.expectedError)
+			assert.Nil(t, w)
+		})
+	}
 }
 
 func Test_fileRotationAllGoodFile(t *testing.T) {

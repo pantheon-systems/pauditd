@@ -2,8 +2,10 @@ package output
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -12,7 +14,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/alexcesaro/statsd.v2"
 )
 
 var transformerFunctionWasCalled = false
@@ -30,7 +31,7 @@ func TestHTTPWriter_newHttpWriter(t *testing.T) {
 	c.Set("output.http.stats.enabled", false)
 	c.Set("output.http.attempts", 0)
 	w, err := newHTTPWriter(c)
-	assert.EqualError(t, err, "Output attempts for http must be at least 1, 0 provided")
+	assert.EqualError(t, err, "output attempts for http must be at least 1, 0 provided")
 	assert.Nil(t, w)
 
 	// url error
@@ -39,7 +40,7 @@ func TestHTTPWriter_newHttpWriter(t *testing.T) {
 	c.Set("output.http.url", "")
 	c.Set("output.http.attempts", 1)
 	w, err = newHTTPWriter(c)
-	assert.EqualError(t, err, "Output http URL must be set")
+	assert.EqualError(t, err, "output http URL must be set")
 	assert.Nil(t, w)
 
 	// worker count error
@@ -49,7 +50,7 @@ func TestHTTPWriter_newHttpWriter(t *testing.T) {
 	c.Set("output.http.attempts", 1)
 	c.Set("output.http.worker_count", 0)
 	w, err = newHTTPWriter(c)
-	assert.EqualError(t, err, "Output workers for http must be at least 1, 0 provided")
+	assert.EqualError(t, err, "output workers for http must be at least 1, 0 provided")
 	assert.Nil(t, w)
 
 	// All good no ssl
@@ -118,54 +119,68 @@ func TestHTTPWriter_process(t *testing.T) {
 	var body []byte
 	var byteCount int64
 	var traceID string
+	var mu sync.Mutex // Guard shared variables
 
-	statsMock, _ := statsd.New(statsd.Mute(true))
+	// Configure metrics
+	cfg := viper.New()
+	cfg.Set("metrics.enabled", false)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
-	http.HandleFunc("/", func(_ http.ResponseWriter, r *http.Request) {
+
+	// Start the test HTTP server
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer wg.Done()
+		mu.Lock()
+		defer mu.Unlock()
 		receivedPost = true
-		body, _ = ioutil.ReadAll(r.Body)
+		body, _ = io.ReadAll(r.Body)
 		byteCount = r.ContentLength
 		traceID = r.Header.Get("X-TRACE-ID")
-		wg.Done()
-	})
-	go func() {
-		if err := http.ListenAndServe(":8888", nil); err != nil {
-			t.Errorf("Failed to start HTTP server: %v", err)
-		}
-	}()
+	}))
+	defer testServer.Close()
 
-	testTransformer := TestTransformer{}
-
-	msgChannel := make(chan *messageTransport, 1)
+	// Set up HTTPWriter
 	msg := []byte("test string")
+	msgChannel := make(chan *messageTransport, 1)
 	writer := &HTTPWriter{
-		url:                     "http://localhost:8888",
+		url:                     testServer.URL,
 		client:                  &http.Client{},
 		messages:                msgChannel,
-		ResponseBodyTransformer: testTransformer,
+		ResponseBodyTransformer: TestTransformer{},
 		traceHeaderName:         "X-TRACE-ID",
+		debug:                   true,
+		workerShutdownSignals:   make(chan struct{}),
+		wg:                      &sync.WaitGroup{},
 	}
 
-	transport := &messageTransport{
-		message: msg,
-		timer:   statsMock.NewTiming(),
-	}
-
-	msgChannel <- transport
+	// Start processing
 	go writer.Process(context.Background())
 
-	if waitTimeout(wg, 15*time.Second) {
-		assert.FailNow(t, "Did not receive call to test service within timeout")
+	// Send message
+	msgChannel <- &messageTransport{
+		message: msg,
+		timer:   metric.GetClient().NewTiming(),
 	}
 
-	assert.NotEmpty(t, traceID)
-	assert.NotNil(t, uuid.FromStringOrNil(traceID))
-	assert.True(t, transformerFunctionWasCalled)
-	assert.True(t, receivedPost)
-	assert.Equal(t, int64(11), byteCount)
-	assert.Equal(t, msg, body)
+	// Wait for request to be received
+	if waitTimeout(wg, 10*time.Second) {
+		t.Fatal("Timed out waiting for HTTP handler to complete")
+	}
+
+	// Assert results
+	mu.Lock()
+	defer mu.Unlock()
+	t.Logf("Received 'X-TRACE-ID' header in handler: %s", traceID)
+
+	assert.NotEmpty(t, traceID, "Trace ID should not be empty")
+	assert.True(t, transformerFunctionWasCalled, "Transformer function should have been called")
+	assert.True(t, receivedPost, "Server should have received the request")
+	assert.Equal(t, int64(11), byteCount, "Byte count should match")
+	assert.Equal(t, msg, body, "Body should match message")
 }
 
 func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
@@ -179,5 +194,20 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 		return false // completed normally
 	case <-time.After(timeout):
 		return true // timed out
+	}
+}
+
+func waitForServer(url string, timeout time.Duration) error {
+	start := time.Now()
+	for {
+		resp, err := http.Get(url)
+		if err == nil {
+			resp.Body.Close()
+			return nil
+		}
+		if time.Since(start) > timeout {
+			return fmt.Errorf("server did not start within %v: %v", timeout, err)
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }

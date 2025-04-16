@@ -51,6 +51,7 @@ type NetlinkClient struct {
 func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW, syscall.NETLINK_AUDIT)
 	if err != nil {
+		slog.Error.Println("Socket creation failed:", err)
 		return nil, fmt.Errorf("could not create a socket: %s", err)
 	}
 
@@ -62,16 +63,17 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	}
 
 	if err = syscall.Bind(fd, n.address); err != nil {
+		slog.Error.Println("Socket bind failed:", err)
 		if closeErr := syscall.Close(fd); closeErr != nil {
-			slog.Error.Println("failed to close socket after bind error:", closeErr)
+			slog.Error.Println("Failed to close socket after bind error:", closeErr)
 		}
 		return nil, fmt.Errorf("could not bind to netlink socket: %s", err)
 	}
 
-	// Set the buffer size if we were asked
+	// Set the buffer size if requested
 	if recvSize > 0 {
 		if err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF, recvSize); err != nil {
-			slog.Error.Println("Failed to set receive buffer size")
+			slog.Error.Println("Failed to set receive buffer size:", err)
 		}
 	}
 

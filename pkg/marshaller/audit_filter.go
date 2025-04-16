@@ -61,62 +61,88 @@ func NewAuditFilter(ruleNumber int, obj map[string]interface{}) (*AuditFilter, e
 }
 
 func parse(ruleNumber int, obj map[string]interface{}) (*AuditFilter, error) {
-	var err error
-	var ok bool
-
 	af := &AuditFilter{
 		Action: Drop,
 	}
 
 	for k, v := range obj {
+		var err error
 		switch k {
 		case "message_type":
-			if ev, ok := v.(string); ok {
-				fv, err := strconv.ParseUint(ev, 10, 64)
-				if err != nil {
-					return nil, fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`; Error: %s", ruleNumber, v, err)
-				}
-				af.MessageType = uint16(fv)
-
-			} else if ev, ok := v.(int); ok {
-				af.MessageType = uint16(ev)
-			} else {
-				return nil, fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
-			}
+			err = parseMessageType(ruleNumber, v, af)
 		case "regex":
-			re, ok := v.(string)
-			if !ok {
-				return nil, fmt.Errorf("`regex` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
-			}
-
-			if af.Regex, err = regexp.Compile(re); err != nil {
-				return nil, fmt.Errorf("`regex` in filter %d could not be parsed; Value: `%+v`; Error: %s", ruleNumber, v, err)
-			}
+			err = parseRegex(ruleNumber, v, af)
 		case "syscall":
-			if af.Syscall, ok = v.(string); ok {
-				// Do nothing; Syscall is already a string.
-				break
-			}
-			if ev, ok := v.(int); ok {
-				af.Syscall = strconv.Itoa(ev)
-			} else {
-				return nil, fmt.Errorf("`syscall` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
-			}
+			err = parseSyscall(ruleNumber, v, af)
 		case "key":
-			if af.Key, ok = v.(string); !ok {
-				return nil, fmt.Errorf("`key` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
-			}
+			err = parseKey(ruleNumber, v, af)
 		case "action":
-			var action string
-			if action, ok = v.(string); !ok || (action != "keep" && action != "drop") {
-				return nil, fmt.Errorf("`action` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
-			}
-
-			af.Action = Drop
-			if action == "keep" {
-				af.Action = Keep
-			}
+			err = parseAction(ruleNumber, v, af)
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
 	return af, nil
+}
+
+func parseMessageType(ruleNumber int, v interface{}, af *AuditFilter) error {
+	if ev, ok := v.(string); ok {
+		fv, err := strconv.ParseUint(ev, 10, 64)
+		if err != nil {
+			return fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`; Error: %s", ruleNumber, v, err)
+		}
+		af.MessageType = uint16(fv)
+	} else if ev, ok := v.(int); ok {
+		af.MessageType = uint16(ev)
+	} else {
+		return fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
+	}
+	return nil
+}
+
+func parseRegex(ruleNumber int, v interface{}, af *AuditFilter) error {
+	re, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("`regex` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
+	}
+	var err error
+	if af.Regex, err = regexp.Compile(re); err != nil {
+		return fmt.Errorf("`regex` in filter %d could not be parsed; Value: `%+v`; Error: %s", ruleNumber, v, err)
+	}
+	return nil
+}
+
+func parseSyscall(ruleNumber int, v interface{}, af *AuditFilter) error {
+	if syscall, ok := v.(string); ok {
+		af.Syscall = syscall
+		return nil
+	}
+	if ev, ok := v.(int); ok {
+		af.Syscall = strconv.Itoa(ev)
+	} else {
+		return fmt.Errorf("`syscall` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
+	}
+	return nil
+}
+
+func parseKey(ruleNumber int, v interface{}, af *AuditFilter) error {
+	key, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("`key` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
+	}
+	af.Key = key
+	return nil
+}
+
+func parseAction(ruleNumber int, v interface{}, af *AuditFilter) error {
+	action, ok := v.(string)
+	if !ok || (action != "keep" && action != "drop") {
+		return fmt.Errorf("`action` in filter %d could not be parsed; Value: `%+v`", ruleNumber, v)
+	}
+	af.Action = Drop
+	if action == "keep" {
+		af.Action = Keep
+	}
+	return nil
 }

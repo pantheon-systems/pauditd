@@ -43,7 +43,7 @@ type NoopTransformer struct{}
 
 // NewNoopTransformer creates new transformer that does nothing
 func NewNoopTransformer(_ *viper.Viper) ResponseBodyTransformer {
-	return NoopTransformer{}
+	return &NoopTransformer{}
 }
 
 // Transform is a noop for the NoopTransformer
