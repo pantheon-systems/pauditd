@@ -150,7 +150,7 @@ func TestNewNetlinkClient(t *testing.T) {
 
 // Helper to make a client listening on a unix socket
 func makeNelinkClient(t *testing.T) *NetlinkClient {
-	if err := os.Remove("pauditd.test.sock"); err != nil {
+	if err := os.Remove("pauditd.test.sock"); err != nil && !os.IsNotExist(err) {
 		t.Errorf("Failed to remove test socket: %v", err)
 	}
 	fd, err := syscall.Socket(syscall.AF_UNIX, syscall.SOCK_RAW, 0)
