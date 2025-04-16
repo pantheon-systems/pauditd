@@ -21,11 +21,12 @@ var auditWriterFactories = make(map[string]AuditWriterFactory)
 // output audit writer factories
 func register(name string, factory AuditWriterFactory) {
 	if factory == nil {
-		slog.Error.Fatalf("Audit writer factory %s does not exist.", name)
+		slog.Error("Audit writer factory %s does not exist.", name)
+		os.Exit(1)
 	}
 	_, registered := auditWriterFactories[name]
 	if registered {
-		slog.Info.Printf("Audit writer factory %s already registered. Ignoring.", name)
+		slog.Info("Audit writer factory %s already registered. Ignoring.", name)
 		return
 	}
 

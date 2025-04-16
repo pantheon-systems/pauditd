@@ -111,7 +111,7 @@ func (a *AuditMarshaller) completeMessage(seq int) {
 	}
 
 	if err := a.writer.Write(msg); err != nil {
-		slog.Error.Println("Failed to write message. Error:", err)
+		slog.Error("Failed to write message. Error:", err)
 		os.Exit(1)
 	}
 
@@ -192,11 +192,11 @@ func (a *AuditMarshaller) detectMissing(seq int) {
 			}
 
 			if a.logOutOfOrder {
-				slog.Error.Println("Got sequence", missedSeq, "after", lag, "messages. Worst lag so far", a.worstLag, "messages")
+				slog.Error("Got sequence", missedSeq, "after", lag, "messages. Worst lag so far", a.worstLag, "messages")
 			}
 			delete(a.missed, missedSeq)
 		} else if seq-missedSeq > a.maxOutOfOrder {
-			slog.Error.Printf("Likely missed sequence %d, current %d, worst message delay %d\n", missedSeq, seq, a.worstLag)
+			slog.Error("Likely missed sequence %d, current %d, worst message delay %d\n", missedSeq, seq, a.worstLag)
 			delete(a.missed, missedSeq)
 		}
 	}

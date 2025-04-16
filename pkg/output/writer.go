@@ -38,7 +38,7 @@ func (a *AuditWriter) Write(msg *parser.AuditMessageGroup) (err error) {
 		}
 
 		if i != a.attempts {
-			slog.Error.Println("Failed to write message, retrying in 1 second. Error:", err)
+			slog.Error("Failed to write message, retrying in 1 second. Error:", err)
 			time.Sleep(time.Second * 1)
 		}
 	}

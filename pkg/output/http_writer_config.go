@@ -70,7 +70,7 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 	watcher := pollwatcher.New(c.clientCertPath, c.clientKeyPath, defaultCertRefreshInterval)
 
 	sentinel := certinel.New(watcher, slog.Info, func(err error) {
-		slog.Error.Printf("Failed to rotate http writer certificates for TLS: %s", err)
+		slog.Error("Failed to rotate http writer certificates for TLS: %s", err)
 		cancel()
 	})
 

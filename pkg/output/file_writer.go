@@ -81,7 +81,7 @@ func handleLogRotation(config *viper.Viper, writer *AuditWriter) {
 	for range sigc {
 		newWriter, err := newFileWriter(config)
 		if err != nil {
-			slog.Error.Fatalln("Error re-opening log file. Exiting.")
+			slog.Error("Error re-opening log file. Exiting.")
 		}
 
 		oldFile := writer.w.(*os.File)
@@ -89,7 +89,7 @@ func handleLogRotation(config *viper.Viper, writer *AuditWriter) {
 
 		err = oldFile.Close()
 		if err != nil {
-			slog.Error.Printf("Error closing old log file: %+v\n", err)
+			slog.Error("Error closing old log file: %+v\n", err)
 		}
 	}
 }
