@@ -29,19 +29,19 @@ run_formatter() {
     echo "Running $tool (formatter)..."
     case "$tool" in
         gci)
-            gci diff .
+            gci diff . || true  # Ignore non-zero exit code for diff
             gci write .
             ;;
         gofmt)
-            gofmt -d .
+            gofmt -d . || true  # Ignore non-zero exit code for diff
             gofmt -w .
             ;;
         gofumpt)
-            gofumpt -d .
+            gofumpt -d . || true  # Ignore non-zero exit code for diff
             gofumpt -w .
             ;;
         goimports)
-            goimports -d .
+            goimports -d . || true  # Ignore non-zero exit code for diff
             goimports -w .
             ;;
         *)
