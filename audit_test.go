@@ -57,7 +57,6 @@ func Test_setRules(t *testing.T) {
 	config := viper.New()
 
 	err := setRules(config, func(_ string, a ...string) error {
-
 		// auditctl
 		if a[0] == "-D" {
 			return errors.New("testing")
