@@ -3,15 +3,21 @@
   "build": {
     "dockerfile": "Dockerfile"
   },
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash"
-  },
   "postCreateCommand": "go mod download",
   "customizations": {
     "vscode": {
       "extensions": [
         "golang.Go"
-      ]
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "args": ["--login"]
+          }
+        }
+      }
     }
   },
   "remoteUser": "root"

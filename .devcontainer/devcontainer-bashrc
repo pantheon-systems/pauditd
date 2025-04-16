@@ -1,0 +1,13 @@
+# Custom aliases
+alias ll="ls -lah"
+
+# Custom prompt
+export PS1="\[\e[1;34m\]\u@devcontainer\[\e[0m\] \[\e[1;32m\]\w\[\e[0m\] \$ "
+
+# Add custom paths
+export PATH=$PATH:/workspace/bin
+
+# Source Git prompt script for __git_ps1
+if [ -f /usr/share/bash-completion/completions/git ]; then
+    source /usr/share/bash-completion/completions/git
+fi
