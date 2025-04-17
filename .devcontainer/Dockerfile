@@ -1,7 +1,9 @@
-FROM golang:1.24-alpine
+# Build for linux/amd64 regardless of the host system architecture.
+# Install qemu to emulate amd64 inside the container for ARM64 hosts.
+FROM --platform=linux/amd64 golang:1.24-bookworm
 
 # Install essential packages
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     bash-completion \
     git \
@@ -11,10 +13,12 @@ RUN apk add --no-cache \
     coreutils \
     gcc \
     g++ \
-    musl-dev \
-    libc6-compat \
+    libc6-dev \
+    jq \
     yq \
-    jq
+    qemu-user-static \
+    docker.io \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set up Go environment
 ENV GOPATH=/go
@@ -30,8 +34,10 @@ RUN go install github.com/daixiang0/gci@latest && \
     go install golang.org/x/tools/cmd/goimports@latest && \
     go install github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter@latest
 
-# Optional: Install goreleaser (static binary)
-RUN curl -sSfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b /usr/local/bin
+# Install goreleaser (static binary)
+ENV GORELEASER_VERSION=2.8.2
+RUN curl -sSfL https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_Linux_x86_64.tar.gz \
+    | tar -xz -C /usr/local/bin goreleaser
 
 # Copy the helper script into the container
 COPY run-linter /usr/local/bin/run-linter

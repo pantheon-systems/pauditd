@@ -50,17 +50,24 @@ nfpms:
 
 ## build and push
 dockers:
-  -
-    dockerfile: Dockerfile
-    ids:
-      - pauditd
+  - dockerfile: Dockerfile
+    ids: [pauditd]
     goos: linux
     goarch: amd64
     image_templates:
-      - "quay.io/getpantheon/pauditd:{{ .Tag }}"                  # v1.0.0
-      - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
-      - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
-      - "quay.io/getpantheon/pauditd:latest"
+    # Image name templates used for building Docker images:
+    # - For snapshots:
+    #   * pauditd:v1.0.0-next
+    # - For releases:
+    #   * quay.io/getpantheon/pauditd:v1.0.0
+    #   * quay.io/getpantheon/pauditd:v1
+    #   * quay.io/getpantheon/pauditd:v1.0
+    #   * quay.io/getpantheon/pauditd:latest
+      - '{{ if .IsSnapshot }}{{ .ProjectName }}:{{ .Version }}{{ else }}quay.io/getpantheon/pauditd:{{ .Tag }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:v{{ .Major }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:latest{{ end }}'
+    skip_push: '{{ .IsSnapshot }}'
 
 # GitHub Releases
 release:

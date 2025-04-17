@@ -73,13 +73,13 @@ main() {
     local tool=$1
 
     # Check if the tool is a formatter
-    if yq '.formatters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
+    if yq -r '.formatters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
         run_formatter "$tool"
         exit 0
     fi
 
     # Check if the tool is a linter
-    if yq '.linters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
+    if yq -r '.linters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
         run_linter "$tool"
         exit 0
     fi
