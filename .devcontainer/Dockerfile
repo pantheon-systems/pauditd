@@ -47,7 +47,7 @@ RUN chmod +x /usr/local/bin/run-linter
 COPY devcontainer-bashrc /root/.bashrc
 
 # Set up working directory
-WORKDIR /workspace
+WORKDIR /workspaces
 
 # Default command
 CMD ["bash"]
