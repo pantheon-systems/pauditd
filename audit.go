@@ -9,11 +9,11 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 )
 
@@ -46,7 +46,7 @@ func loadConfig(configFile string) (*viper.Viper, error) {
 		return nil, err
 	}
 
-	slog.Configure(config.GetInt("log.flags"))
+	logger.Configure(config.GetInt("log.flags"))
 
 	return config, nil
 }
@@ -57,7 +57,7 @@ func setRules(config *viper.Viper, e executor) error {
 		return fmt.Errorf("Failed to flush existing audit rules. Error: %s", err)
 	}
 
-	slog.Info("Flushed existing audit rules")
+	logger.Info("Flushed existing audit rules")
 
 	// Add ours in
 	if rules := config.GetStringSlice("rules"); len(rules) != 0 {
@@ -71,7 +71,7 @@ func setRules(config *viper.Viper, e executor) error {
 				return fmt.Errorf("Failed to add rule #%d. Error: %s", i+1, err)
 			}
 
-			slog.Info("Added audit rule #%d\n", i+1)
+			logger.Info("Added audit rule #%d\n", i+1)
 		}
 	} else {
 		return errors.New("No audit rules found")
@@ -143,20 +143,20 @@ func main() {
 	flag.Parse()
 
 	if *configFile == "" {
-		slog.Error("A config file must be provided")
+		logger.Error("A config file must be provided")
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	config, err := loadConfig(*configFile)
 	if err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	err = metric.Configure(config)
 	if err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
@@ -165,29 +165,29 @@ func main() {
 	// output needs to be created before anything that write to stdout
 	writer, err := createOutput(config)
 	if err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	if err := setRules(config, lExec); err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	filters, err := createFilters(config)
 	if err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	nlClient, err := NewNetlinkClient(config.GetInt("socket_buffer.receive"))
 	if err != nil {
-		slog.Error(err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	if config.GetBool("parser.enable_uid_caching") {
-		slog.Info("Enabling uid/uname caching")
+		logger.Info("Enabling uid/uname caching")
 		path := config.GetString("parser.password_file_path")
 		parser.ActiveUsernameResolver = parser.NewCachingUsernameResolver(path)
 	}
@@ -202,7 +202,7 @@ func main() {
 		filters,
 	)
 
-	slog.Info("Started processing events in the range [%d, %d]\n", config.GetInt("events.min"), config.GetInt("events.max"))
+	logger.Info("Started processing events in the range [%d, %d]\n", config.GetInt("events.min"), config.GetInt("events.max"))
 
 	//Main loop. Get data from netlink and send it to the json lib for processing
 	for {
@@ -212,7 +212,7 @@ func main() {
 			if err.Error() == "no buffer space available" {
 				metric.GetClient().Increment("messages.netlink_dropped")
 			}
-			slog.Error("Error during message receive: %+v\n", err)
+			logger.Error("Error during message receive: %+v\n", err)
 			continue
 		}
 

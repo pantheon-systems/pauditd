@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/spf13/viper"
 )
 
@@ -19,7 +19,7 @@ func newStdOutWriter(config *viper.Viper) (*AuditWriter, error) {
 	}
 
 	// info logger is no longer stdout
-	slog.Info.SetOutput(os.Stderr)
+	logger.Info.SetOutput(os.Stderr)
 
 	return NewAuditWriter(os.Stdout, attempts), nil
 }

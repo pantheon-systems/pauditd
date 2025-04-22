@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -149,16 +149,16 @@ func sendReceive(t *testing.T, n *NetlinkClient, packet *NetlinkPacket, payload 
 
 // Resets global loggers
 func resetLogger() {
-	slog.Info.SetOutput(os.Stdout)
-	slog.Error.SetOutput(os.Stderr)
+	logger.Info.SetOutput(os.Stdout)
+	logger.Error.SetOutput(os.Stderr)
 }
 
 // Hooks the global loggers writers so you can assert their contents
 func hookLogger() (lb *bytes.Buffer, elb *bytes.Buffer) {
 	lb = &bytes.Buffer{}
-	slog.Info.SetOutput(lb)
+	logger.Info.SetOutput(lb)
 
 	elb = &bytes.Buffer{}
-	slog.Error.SetOutput(elb)
+	logger.Error.SetOutput(elb)
 	return
 }

@@ -2,9 +2,10 @@ package output
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/spf13/viper"
 )
 
@@ -21,12 +22,12 @@ var auditWriterFactories = make(map[string]AuditWriterFactory)
 // output audit writer factories
 func register(name string, factory AuditWriterFactory) {
 	if factory == nil {
-		slog.Error("Audit writer factory %s does not exist.", name)
+		logger.Error("Audit writer factory %s does not exist.", name)
 		os.Exit(1)
 	}
 	_, registered := auditWriterFactories[name]
 	if registered {
-		slog.Info("Audit writer factory %s already registered. Ignoring.", name)
+		logger.Info("Audit writer factory %s already registered. Ignoring.", name)
 		return
 	}
 

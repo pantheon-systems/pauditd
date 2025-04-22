@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
 
 // AuditWriter is the class that encapsulates the io.Writer for output
@@ -38,7 +38,7 @@ func (a *AuditWriter) Write(msg *parser.AuditMessageGroup) (err error) {
 		}
 
 		if i != a.attempts {
-			slog.Error("Failed to write message, retrying in 1 second. Error:", err)
+			logger.Error("Failed to write message, retrying in 1 second. Error:", err)
 			time.Sleep(time.Second * 1)
 		}
 	}

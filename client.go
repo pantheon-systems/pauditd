@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 )
 
 // Endianness is an alias for what we assume is the current machine endianness
@@ -67,13 +67,13 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	// Set the buffer size if we were asked
 	if recvSize > 0 {
 		if err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF, recvSize); err != nil {
-			slog.Error("Failed to set receive buffer size")
+			logger.Error("Failed to set receive buffer size")
 		}
 	}
 
 	// Print the current receive buffer size
 	if v, err := syscall.GetsockoptInt(n.fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF); err == nil {
-		slog.Info("Socket receive buffer size:", v)
+		logger.Info("Socket receive buffer size:", v)
 	}
 
 	go func() {
@@ -160,7 +160,7 @@ func (n *NetlinkClient) KeepConnection() {
 
 	err := n.Send(packet, payload)
 	if err != nil {
-		slog.Error("Error occurred while trying to keep the connection:", err)
+		logger.Error("Error occurred while trying to keep the connection:", err)
 	}
 }
 

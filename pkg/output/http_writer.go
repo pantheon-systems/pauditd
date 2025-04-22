@@ -12,7 +12,7 @@ import (
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output/httptransformer"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/streadway/handy/breaker"
@@ -55,12 +55,12 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 		if r := recover(); r != nil {
 			_, ok := r.(error)
 			if !ok {
-				slog.Error("pkg: %v", r)
+				logger.Error("pkg: %v", r)
 			}
 			w.cancelFunc()
-			slog.Info("Waiting for goroutines to complete")
+			logger.Info("Waiting for goroutines to complete")
 			w.wg.Wait()
-			slog.Info("Goroutines completed")
+			logger.Info("Goroutines completed")
 			os.Exit(0)
 		}
 	}()
@@ -77,7 +77,7 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 	case w.messages <- transport:
 		w.buffErrCount = 0
 	default:
-		slog.Error("Buffer full or closed, messages dropped")
+		logger.Error("Buffer full or closed, messages dropped")
 		metric.GetClient().Increment("http_writer.dropped_messages")
 
 		// Exit the pod if the error persists
@@ -106,7 +106,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 			traceID := uuid.NewV1()
 
 			if w.debug {
-				slog.Info("{ \"trace_id\": \"%s\", \"msg\": %s }", traceID, strings.TrimSuffix(string(transport.message), "\n"))
+				logger.Info("{ \"trace_id\": \"%s\", \"msg\": %s }", traceID, strings.TrimSuffix(string(transport.message), "\n"))
 			}
 
 			body, err := w.ResponseBodyTransformer.Transform(traceID, transport.message)
@@ -114,13 +114,13 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 				continue
 			}
 			if w.debug {
-				slog.Info(string(body))
+				logger.Info(string(body))
 			}
 			payloadReader := bytes.NewReader(body)
 
 			req, err := http.NewRequest(http.MethodPost, w.url, payloadReader)
 			if err != nil {
-				slog.Error("HTTPWriter.Process could not create new request: %s", err.Error())
+				logger.Error("HTTPWriter.Process could not create new request: %s", err.Error())
 				continue
 			}
 
@@ -130,7 +130,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 
 			resp, err := w.client.Do(req.WithContext(ctx))
 			if err != nil {
-				slog.Error("HTTPWriter.Process could not send request: %s", err.Error())
+				logger.Error("HTTPWriter.Process could not send request: %s", err.Error())
 				metric.GetClient().Increment("http_writer.request_error.count")
 				continue
 			}
@@ -152,7 +152,7 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	}
 
 	if writerConfig.debug {
-		slog.Info(writerConfig)
+		logger.Info(writerConfig)
 	}
 
 	queue := make(chan *messageTransport, writerConfig.bufferSize)
@@ -164,13 +164,13 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	go func() {
 		select {
 		case v := <-signals:
-			slog.Info("Received signal %v\n", v)
+			logger.Info("Received signal %v\n", v)
 			close(queue)
 			cancel()
 		case <-ctx.Done():
-			slog.Info("cancel() called! Shutting down")
+			logger.Info("cancel() called! Shutting down")
 		}
-		slog.Info("Shutting down %d workers...\n", writerConfig.workerCount)
+		logger.Info("Shutting down %d workers...\n", writerConfig.workerCount)
 		for i := 0; i < writerConfig.workerCount; i++ {
 			workerShutdownSignals <- struct{}{}
 		}
