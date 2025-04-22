@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"math"
 
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
@@ -91,6 +92,9 @@ func parseMessageType(ruleNumber int, v interface{}, af *AuditFilter) error {
 		fv, err := strconv.ParseUint(ev, 10, 64)
 		if err != nil {
 			return fmt.Errorf("`message_type` in filter %d could not be parsed; Value: `%+v`; Error: %s", ruleNumber, v, err)
+		}
+		if fv > math.MaxUint16 {
+			return fmt.Errorf("`message_type` in filter %d is out of range; Value: `%+v`", ruleNumber, v)
 		}
 		af.MessageType = uint16(fv)
 	} else if ev, ok := v.(int); ok {
