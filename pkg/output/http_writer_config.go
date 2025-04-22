@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
 
@@ -76,9 +76,8 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 
 	sentinel.Watch()
 
-	var caCerts *x509.CertPool
-	caCerts = x509.NewCertPool()
-	caCert, err := ioutil.ReadFile(c.caCertPath)
+	caCerts := x509.NewCertPool()
+	caCert, err := os.ReadFile(c.caCertPath)
 	caCerts.AppendCertsFromPEM(caCert)
 	if err != nil {
 		return nil, err
@@ -93,49 +92,98 @@ func (c config) createTLSConfig(cancel context.CancelFunc) (*tls.Config, error) 
 func newHTTPWriterConfig(viperConfig *viper.Viper) (*config, error) {
 	c := &config{}
 
+	if err := setAttempts(viperConfig, c); err != nil {
+		return nil, err
+	}
+
+	if err := setServiceURL(viperConfig, c); err != nil {
+		return nil, err
+	}
+
+	if err := setWorkerCount(viperConfig, c); err != nil {
+		return nil, err
+	}
+
+	if err := setBufferSize(viperConfig, c); err != nil {
+		return nil, err
+	}
+
+	setTraceHeaderName(viperConfig, c)
+	setResponseBodyTransformer(viperConfig, c)
+	setDebug(viperConfig, c)
+	setFailureRatio(viperConfig, c)
+
+	if err := setSSLConfig(viperConfig, c); err != nil {
+		return nil, err
+	}
+
+	setIdleConnTimeout(viperConfig, c)
+
+	return c, nil
+}
+
+func setAttempts(viperConfig *viper.Viper, c *config) error {
 	c.attempts = viperConfig.GetInt("output.http.attempts")
 	if c.attempts < 1 {
-		return nil, fmt.Errorf("Output attempts for http must be at least 1, %v provided", c.attempts)
+		return fmt.Errorf("output attempts for http must be at least 1, %v provided", c.attempts)
 	}
+	return nil
+}
 
+func setServiceURL(viperConfig *viper.Viper, c *config) error {
 	c.serviceURL = viperConfig.GetString("output.http.url")
 	if c.serviceURL == "" {
-		return nil, fmt.Errorf("Output http URL must be set")
+		return fmt.Errorf("output http URL must be set")
 	}
+	return nil
+}
 
+func setWorkerCount(viperConfig *viper.Viper, c *config) error {
 	c.workerCount = defaultWorkerCount
 	if viperConfig.IsSet("output.http.worker_count") {
 		c.workerCount = viperConfig.GetInt("output.http.worker_count")
 		if c.workerCount < 1 {
-			return nil, fmt.Errorf("Output workers for http must be at least 1, %v provided", c.workerCount)
+			return fmt.Errorf("output workers for http must be at least 1, %v provided", c.workerCount)
 		}
 	}
+	return nil
+}
 
+func setBufferSize(viperConfig *viper.Viper, c *config) error {
 	c.bufferSize = defaultBufferSize
 	if viperConfig.IsSet("output.http.buffer_size") {
 		c.bufferSize = viperConfig.GetInt("output.http.buffer_size")
 		if c.bufferSize < c.workerCount {
-			return nil, fmt.Errorf("Buffer size must be larger than worker count, %v provided", c.bufferSize)
+			return fmt.Errorf("buffer size must be larger than worker count, %v provided", c.bufferSize)
 		}
 	}
+	return nil
+}
 
-	c.traceHeaderName = ""
+func setTraceHeaderName(viperConfig *viper.Viper, c *config) {
 	if viperConfig.IsSet("output.http.trace_header_name") {
 		c.traceHeaderName = viperConfig.GetString("output.http.trace_header_name")
 	}
+}
 
-	// Default is returned in the factory method if value is empty string
+func setResponseBodyTransformer(viperConfig *viper.Viper, c *config) {
 	if viperConfig.IsSet("output.http.response_body_transformer") {
 		c.respBodyTransName = viperConfig.GetString("output.http.response_body_transformer")
 	}
+}
 
+func setDebug(viperConfig *viper.Viper, c *config) {
 	c.debug = viperConfig.IsSet("output.http.debug") && viperConfig.GetBool("output.http.debug")
+}
 
+func setFailureRatio(viperConfig *viper.Viper, c *config) {
 	c.failureRatio = defaultBreakerFailureRatio
 	if viperConfig.IsSet("output.http.breaker_failure_ratio") {
 		c.failureRatio = viperConfig.GetFloat64("output.http.breaker_failure_ratio")
 	}
+}
 
+func setSSLConfig(viperConfig *viper.Viper, c *config) error {
 	c.sslEnabled = false
 	if viperConfig.IsSet("output.http.ssl.enabled") && viperConfig.GetBool("output.http.ssl.enabled") {
 		c.sslEnabled = true
@@ -144,14 +192,15 @@ func newHTTPWriterConfig(viperConfig *viper.Viper) (*config, error) {
 		c.caCertPath = viperConfig.GetString("output.http.ssl.ca_cert")
 
 		if c.clientCertPath == "" || c.clientKeyPath == "" || c.caCertPath == "" {
-			return nil, fmt.Errorf("SSL is enabled, please specify the required certificates (client_cert, client_key, ca_cert)")
+			return fmt.Errorf("SSL is enabled, please specify the required certificates (client_cert, client_key, ca_cert)")
 		}
 	}
+	return nil
+}
 
+func setIdleConnTimeout(viperConfig *viper.Viper, c *config) {
 	c.idleConnTimeout = defaultIdleConnTimeout
 	if viperConfig.IsSet("output.http.idle_conn_timeout") {
 		c.idleConnTimeout = viperConfig.GetDuration("output.http.idle_conn_timeout")
 	}
-
-	return c, nil
 }

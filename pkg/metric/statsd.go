@@ -1,11 +1,12 @@
+// Package metric provides utilities for configuring and interacting with the StatsD client.
 package metric
 
 import (
 	"fmt"
-	"github.com/pantheon-systems/pauditd/pkg/system"
 	"strconv"
 	"strings"
 
+	"github.com/pantheon-systems/pauditd/pkg/system"
 	"github.com/spf13/viper"
 	statsd "gopkg.in/alexcesaro/statsd.v2"
 )
@@ -15,25 +16,28 @@ const (
 	defaultStatsdSampleRate = 0.5
 )
 
-var (
-	client *statsd.Client
-)
+var client *statsd.Client
 
+// Shutdown closes the StatsD client and releases resources.
 func Shutdown() {
 	client.Close()
 	client = nil
 }
 
+// GetClient returns the current StatsD client instance.
 func GetClient() *statsd.Client {
 	return client
 }
 
+// SetConfigDefaults sets default configuration values for the metrics system.
 func SetConfigDefaults(config *viper.Viper) {
 	config.SetDefault("metrics.enabled", false)
 	config.SetDefault("metrics.address", defaultStatsdAddress)
 	config.SetDefault("metrics.sample_rate", defaultStatsdSampleRate)
 }
 
+// Configure initializes the StatsD client based on the provided configuration.
+// It returns an error if the configuration is invalid.
 func Configure(config *viper.Viper) error {
 	var err error
 	var statsAddress string

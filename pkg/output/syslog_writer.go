@@ -14,7 +14,7 @@ func init() {
 func newSyslogWriter(config *viper.Viper) (*AuditWriter, error) {
 	attempts := config.GetInt("output.syslog.attempts")
 	if attempts < 1 {
-		return nil, fmt.Errorf("Output attempts for syslog must be at least 1, %v provided", attempts)
+		return nil, fmt.Errorf("output attempts for syslog must be at least 1, %v provided", attempts)
 	}
 
 	syslogWriter, err := syslog.Dial(
@@ -23,9 +23,8 @@ func newSyslogWriter(config *viper.Viper) (*AuditWriter, error) {
 		syslog.Priority(config.GetInt("output.syslog.priority")),
 		config.GetString("output.syslog.tag"),
 	)
-
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open syslog writer. Error: %v", err)
+		return nil, fmt.Errorf("failed to open syslog writer. Error: %v", err)
 	}
 
 	return NewAuditWriter(syslogWriter, attempts), nil

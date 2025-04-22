@@ -3,34 +3,36 @@ version: 2
 project_name: pauditd
 
 builds:
-- binary: pauditd
-  env:
-    - CGO_ENABLED=1
-  ldflags:
-    - -s -w
-  goos:
-    - linux
-  goarch:
-    - amd64
+  -
+    binary: pauditd
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+    goarch:
+      - amd64
 
 archives:
-  - id: tarball
-    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  -
+    id: tarball
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - Merge pull request
-      - Merge branch
+      - "^docs:"
+      - "^test:"
+      - "Merge pull request"
+      - "Merge branch"
 
 nfpms:
   -
@@ -48,14 +50,30 @@ nfpms:
 
 ## build and push
 dockers:
-  -
-    dockerfile: Dockerfile
-    ids:
-    - pauditd
+  - dockerfile: Dockerfile
+    ids: [pauditd]
     goos: linux
     goarch: amd64
     image_templates:
-    - "quay.io/getpantheon/pauditd:{{ .Tag }}"                  # v1.0.0
-    - "quay.io/getpantheon/pauditd:v{{ .Major }}"               # v1
-    - "quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}"  # v1.0
-    - "quay.io/getpantheon/pauditd:latest"
+    # Image name templates used for building Docker images:
+    # - For snapshots:
+    #   * pauditd:v1.0.0-next
+    # - For releases:
+    #   * quay.io/getpantheon/pauditd:v1.0.0
+    #   * quay.io/getpantheon/pauditd:v1
+    #   * quay.io/getpantheon/pauditd:v1.0
+    #   * quay.io/getpantheon/pauditd:latest
+      - '{{ if .IsSnapshot }}{{ .ProjectName }}:{{ .Version }}{{ else }}quay.io/getpantheon/pauditd:{{ .Tag }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:v{{ .Major }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:v{{ .Major }}.{{ .Minor }}{{ end }}'
+      - '{{ if not .IsSnapshot }}quay.io/getpantheon/pauditd:latest{{ end }}'
+    skip_push: '{{ .IsSnapshot }}'
+
+# GitHub Releases
+release:
+  github:
+      owner: pantheon-systems
+      name: pauditd
+  draft: true                   # Set to true if you want to manually review before publishing
+  replace_existing_draft: true  # Only effective if `draft` is set to true.
+  prerelease: false             # Set to true for pre-releases

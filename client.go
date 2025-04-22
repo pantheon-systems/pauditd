@@ -16,11 +16,12 @@ import (
 var Endianness = binary.LittleEndian
 
 const (
-	// MAX_AUDIT_MESSAGE_LENGTH see http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L398
-	MAX_AUDIT_MESSAGE_LENGTH = 8970
+	// MaxAuditMessageLength see http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L398
+	MaxAuditMessageLength = 8970
 )
 
-//TODO: this should live in a marshaller
+// AuditStatusPayload represents the payload for audit status
+// TODO: this should live in a marshaller
 type AuditStatusPayload struct {
 	Mask            uint32
 	Enabled         uint32
@@ -37,6 +38,7 @@ type AuditStatusPayload struct {
 // NetlinkPacket is an alias to give the header a similar name here
 type NetlinkPacket syscall.NlMsghdr
 
+// NetlinkClient handles communication with the netlink socket.
 type NetlinkClient struct {
 	fd                   int
 	address              syscall.Sockaddr
@@ -49,25 +51,29 @@ type NetlinkClient struct {
 func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW, syscall.NETLINK_AUDIT)
 	if err != nil {
-		return nil, fmt.Errorf("Could not create a socket: %s", err)
+		slog.Error.Println("Socket creation failed:", err)
+		return nil, fmt.Errorf("could not create a socket: %s", err)
 	}
 
 	n := &NetlinkClient{
 		fd:                   fd,
 		address:              &syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: 0, Pid: 0},
-		buf:                  make([]byte, MAX_AUDIT_MESSAGE_LENGTH),
+		buf:                  make([]byte, MaxAuditMessageLength),
 		cancelKeepConnection: make(chan struct{}),
 	}
 
 	if err = syscall.Bind(fd, n.address); err != nil {
-		syscall.Close(fd)
-		return nil, fmt.Errorf("Could not bind to netlink socket: %s", err)
+		slog.Error.Println("Socket bind failed:", err)
+		if closeErr := syscall.Close(fd); closeErr != nil {
+			slog.Error.Println("Failed to close socket after bind error:", closeErr)
+		}
+		return nil, fmt.Errorf("could not bind to netlink socket: %s", err)
 	}
 
-	// Set the buffer size if we were asked
+	// Set the buffer size if requested
 	if recvSize > 0 {
 		if err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF, recvSize); err != nil {
-			slog.Error.Println("Failed to set receive buffer size")
+			slog.Error.Println("Failed to set receive buffer size:", err)
 		}
 	}
 
@@ -93,7 +99,7 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 
 // Send will send a packet and payload to the netlink socket without waiting for a response
 func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
-	//We need to get the length first. This is a bit wasteful, but requests are rare so yolo..
+	// We need to get the length first. This is a bit wasteful, but requests are rare so yolo..
 	buf := new(bytes.Buffer)
 	var length int
 
@@ -101,8 +107,12 @@ func (n *NetlinkClient) Send(np *NetlinkPacket, a *AuditStatusPayload) error {
 
 	for {
 		buf.Reset()
-		binary.Write(buf, Endianness, np)
-		binary.Write(buf, Endianness, a)
+		if err := binary.Write(buf, Endianness, np); err != nil {
+			return fmt.Errorf("failed to write np: %v", err)
+		}
+		if err := binary.Write(buf, Endianness, a); err != nil {
+			return fmt.Errorf("failed to write a: %v", err)
+		}
 		if np.Len == 0 {
 			length = len(buf.Bytes())
 			np.Len = uint32(length)
@@ -126,7 +136,7 @@ func (n *NetlinkClient) Receive() (*syscall.NetlinkMessage, error) {
 	}
 
 	if nlen < 1 {
-		return nil, errors.New("Got a 0 length packet")
+		return nil, errors.New("got a 0 length packet")
 	}
 
 	msg := &syscall.NetlinkMessage{
@@ -149,7 +159,7 @@ func (n *NetlinkClient) KeepConnection() {
 		Mask:    4,
 		Enabled: 1,
 		Pid:     uint32(syscall.Getpid()),
-		//TODO: Failure: http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L338
+		// TODO: Failure: http://lxr.free-electrons.com/source/include/uapi/linux/audit.h#L338
 	}
 
 	packet := &NetlinkPacket{
@@ -167,4 +177,7 @@ func (n *NetlinkClient) KeepConnection() {
 // Close will stop running goroutines
 func (n *NetlinkClient) Close() {
 	close(n.cancelKeepConnection)
+	if err := syscall.Close(n.fd); err != nil {
+		slog.Error.Println("failed to close syscall fd:", err)
+	}
 }

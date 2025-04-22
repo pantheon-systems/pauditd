@@ -1,3 +1,4 @@
+// Package output provides utilities for creating and managing audit writers.
 package output
 
 import (
@@ -39,7 +40,7 @@ func CreateAuditWriter(auditWriterName string, config *viper.Viper) (*AuditWrite
 	auditWriterFactory, ok := auditWriterFactories[auditWriterName]
 	if !ok {
 		availableAuditWriters := GetAvailableAuditWriters()
-		return nil, fmt.Errorf("Invalid audit writer name. Must be one of: %s", strings.Join(availableAuditWriters, ", "))
+		return nil, fmt.Errorf("invalid audit writer name, must be one of: %s", strings.Join(availableAuditWriters, ", "))
 	}
 
 	// Run the factory with the configuration.

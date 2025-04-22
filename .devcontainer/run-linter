@@ -1,0 +1,95 @@
+#!/bin/bash
+
+set -e
+
+# Path to the .golangci.yml file
+CONFIG_FILE=".golangci.yml"
+
+# Function to list available formatters and linters
+list_options() {
+    echo "Available formatters:"
+    yq '.formatters.enable[]' "$CONFIG_FILE" | sed 's/^/  - /'
+
+    echo ""
+    echo "Available linters:"
+    yq '.linters.enable[]' "$CONFIG_FILE" | sed 's/^/  - /'
+}
+
+# Function to ensure yq is installed
+ensure_yq_installed() {
+    if ! command -v yq &> /dev/null; then
+        echo "Error: yq is not installed. Install it with 'apk add yq' (Alpine) or 'brew install yq' (macOS)."
+        exit 1
+    fi
+}
+
+# Function to handle formatters
+run_formatter() {
+    local tool=$1
+    echo "Running $tool (formatter)..."
+    case "$tool" in
+        gci)
+            gci diff . || true  # Ignore non-zero exit code for diff
+            gci write .
+            ;;
+        gofmt)
+            gofmt -d . || true  # Ignore non-zero exit code for diff
+            gofmt -w .
+            ;;
+        gofumpt)
+            gofumpt -d . || true  # Ignore non-zero exit code for diff
+            gofumpt -w .
+            ;;
+        goimports)
+            goimports -d . || true  # Ignore non-zero exit code for diff
+            goimports -w .
+            ;;
+        *)
+            echo "Error: Formatter $tool is not supported in this script."
+            exit 1
+            ;;
+    esac
+}
+
+# Function to handle linters
+run_linter() {
+    local tool=$1
+    echo "Running $tool (linter)..."
+    golangci-lint run --enable-only "$tool" ./...
+}
+
+# Main function
+main() {
+    ensure_yq_installed
+
+    # Check if the user provided an argument
+    if [ -z "$1" ]; then
+        echo "Usage: $0 <formatter-or-linter-name>"
+        echo ""
+        list_options
+        exit 1
+    fi
+
+    local tool=$1
+
+    # Check if the tool is a formatter
+    if yq -r '.formatters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
+        run_formatter "$tool"
+        exit 0
+    fi
+
+    # Check if the tool is a linter
+    if yq -r '.linters.enable[]' "$CONFIG_FILE" | grep -q "^$tool$"; then
+        run_linter "$tool"
+        exit 0
+    fi
+
+    # If the tool is not found
+    echo "Error: $tool is not defined in $CONFIG_FILE."
+    echo ""
+    list_options
+    exit 1
+}
+
+# Call the main function with all script arguments
+main "$@"

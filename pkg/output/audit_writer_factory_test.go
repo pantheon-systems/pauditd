@@ -10,15 +10,15 @@ import (
 
 type noopWriter struct{}
 
-func (t *noopWriter) Write(a []byte) (int, error) {
+func (t *noopWriter) Write(_ []byte) (int, error) {
 	return 0, nil
 }
 
-func testFactory(conf *viper.Viper) (*AuditWriter, error) {
+func testFactory(_ *viper.Viper) (*AuditWriter, error) {
 	return NewAuditWriter(&noopWriter{}, 1), nil
 }
 
-func secondTestFactory(conf *viper.Viper) (*AuditWriter, error) {
+func secondTestFactory(_ *viper.Viper) (*AuditWriter, error) {
 	return nil, errors.New("someerror")
 }
 
