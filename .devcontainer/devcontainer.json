@@ -1,5 +1,5 @@
 {
-  "name": "Go Alpine Dev",
+  "name": "Go Debian-12.10",
   "build": {
     "dockerfile": "Dockerfile"
   },
