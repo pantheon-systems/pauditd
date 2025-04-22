@@ -3,9 +3,9 @@ package marshaller
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
-	"math"
 
 	"github.com/pantheon-systems/pauditd/pkg/slog"
 )
