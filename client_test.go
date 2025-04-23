@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
 	"os"
 	"syscall"
 	"testing"
@@ -37,7 +39,13 @@ func TestNetlinkClient_KeepConnection(t *testing.T) {
 	}
 	n.KeepConnection()
 	assert.Equal(t, "", lb.String(), "Got some log lines we did not expect")
-	assert.Equal(t, "Error occurred while trying to keep the connection: bad file descriptor\n", elb.String(), "Figured we would have an error")
+
+	perr := json.Unmarshal([]byte(elb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "Error occurred while trying to keep the connection:", logline["msg"], "Figured we would have an error")
 }
 
 func TestNetlinkClient_SendReceive(t *testing.T) {

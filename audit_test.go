@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/user"
@@ -17,6 +19,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
+
+var logline map[string]interface{}
 
 func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
@@ -259,7 +263,13 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", lb.String())
+
+	perr := json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", logline["msg"])
 
 	// Missing syscall and missing key and missing message type
 	c = viper.New()
@@ -284,7 +294,12 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", lb.String())
+
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline["msg"])
 
 	// Good with ints (Syscall Filter)
 	lb.Reset()
@@ -300,7 +315,12 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", lb.String())
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline["msg"])
 
 	// Good with strings (RuleKey Filter)
 	lb.Reset()
@@ -317,7 +337,13 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Equal(t, "testkey", f[0].Key)
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", lb.String())
+
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", logline["msg"])
 }
 
 func Benchmark_MultiPacketMessage(b *testing.B) {
