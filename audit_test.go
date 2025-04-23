@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
-	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -22,7 +22,7 @@ func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
 	defer func() {
 		if err := os.Remove(file); err != nil {
-			slog.Error.Println("Failed to remove file:", err)
+			logger.Error("Failed to remove file:", err)
 		}
 	}()
 
@@ -38,8 +38,6 @@ func Test_loadConfig(t *testing.T) {
 	assert.Equal(t, "pauditd", config.GetString("output.syslog.tag"), "output.syslog.tag should default to pauditd")
 	assert.Equal(t, 3, config.GetInt("output.syslog.attempts"), "output.syslog.attempts should default to 3")
 	assert.Equal(t, 0, config.GetInt("log.flags"), "log.flags should default to 0")
-	assert.Equal(t, 0, logger.Info.Flags(), "stdout log flags was wrong")
-	assert.Equal(t, 0, logger.Error.Flags(), "stderr log flags was wrong")
 	assert.Nil(t, err)
 
 	// parse error

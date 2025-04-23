@@ -55,12 +55,12 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 		if r := recover(); r != nil {
 			_, ok := r.(error)
 			if !ok {
-				slog.Error(fmt.Sprintf("pkg: %v", r))
+				logger.Error(fmt.Sprintf("pkg: %v", r))
 			}
 			w.cancelFunc()
-			slog.Info("Waiting for goroutines to complete")
+			logger.Info("Waiting for goroutines to complete")
 			w.wg.Wait()
-			slog.Info("Goroutines completed")
+			logger.Info("Goroutines completed")
 			os.Exit(0)
 		}
 	}()
@@ -128,7 +128,7 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 
 			if w.traceHeaderName != "" {
 				req.Header.Add(w.traceHeaderName, traceID.String())
-				slog.Info("http_writer.header_injection",
+				logger.Info("http_writer.header_injection",
 					"event", "header.inject",
 					"component", "http_writer",
 					"trace_id", traceID,

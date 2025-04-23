@@ -19,7 +19,7 @@ func newStdOutWriter(config *viper.Viper) (*AuditWriter, error) {
 	}
 
 	// info logger is no longer stdout
-	logger.Info.SetOutput(os.Stderr)
+	logger.SetOutput(os.Stderr,"info")
 
 	return NewAuditWriter(os.Stdout, attempts), nil
 }

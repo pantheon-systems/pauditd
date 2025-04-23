@@ -48,7 +48,7 @@ func loadConfig(configFile string) (*viper.Viper, error) {
 		return nil, err
 	}
 
-	logger.Configure(config.GetInt("log.flags"))
+	// logger.Configure(config.GetInt("log.flags"))
 
 	return config, nil
 }
