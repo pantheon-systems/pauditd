@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/user"
@@ -11,9 +10,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/metric"
-
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
+	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/spf13/viper"
@@ -22,7 +20,11 @@ import (
 
 func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			slog.Error.Println("Failed to remove file:", err)
+		}
+	}()
 
 	// defaults
 	config, err := loadConfig(file)
@@ -53,39 +55,37 @@ func Test_setRules(t *testing.T) {
 	// fail to flush rules
 	config := viper.New()
 
-	err := setRules(config, func(s string, a ...string) error {
-		if s == "auditctl" && a[0] == "-D" {
+	err := setRules(config, func(_ string, a ...string) error {
+		// auditctl
+		if a[0] == "-D" {
 			return errors.New("testing")
 		}
-
 		return nil
 	})
 
-	assert.EqualError(t, err, "Failed to flush existing audit rules. Error: testing")
+	assert.EqualError(t, err, "failed to flush existing audit rules. Error: testing")
 
 	// fail on 0 rules
-	err = setRules(config, func(s string, a ...string) error { return nil })
-	assert.EqualError(t, err, "No audit rules found")
+	err = setRules(config, func(_ string, _ ...string) error { return nil })
+	assert.EqualError(t, err, "no audit rules found")
 
 	// failure to set rule
 	r := 0
 	config.Set("rules", []string{"-a -1 -2", "", "-a -3 -4"})
-	err = setRules(config, func(s string, a ...string) error {
+	err = setRules(config, func(_ string, a ...string) error {
 		if a[0] != "-D" {
 			return errors.New("testing rule")
 		}
-
 		r++
-
 		return nil
 	})
 
 	assert.Equal(t, 1, r, "Wrong number of rule set attempts")
-	assert.EqualError(t, err, "Failed to add rule #1. Error: testing rule")
+	assert.EqualError(t, err, "failed to add rule #1. Error: testing rule")
 
 	// properly set rules
 	r = 0
-	err = setRules(config, func(s string, a ...string) error {
+	err = setRules(config, func(_ string, a ...string) error {
 		// Skip the flush rules
 		if a[0] != "-a" {
 			return nil
@@ -106,7 +106,7 @@ func Test_createOutput(t *testing.T) {
 	// no outputs
 	c := viper.New()
 	w, err := createOutput(c)
-	assert.EqualError(t, err, "No outputs were configured")
+	assert.EqualError(t, err, "no outputs were configured")
 	assert.Nil(t, w)
 
 	// multiple outputs
@@ -125,7 +125,11 @@ func Test_createOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer l.Close()
+	defer func() {
+		if err := l.Close(); err != nil {
+			t.Errorf("Failed to close listener: %v", err)
+		}
+	}()
 
 	c = viper.New()
 	c.Set("output.syslog.enabled", true)
@@ -136,12 +140,12 @@ func Test_createOutput(t *testing.T) {
 	c.Set("output.file.enabled", true)
 	c.Set("output.file.attempts", 1)
 	c.Set("output.file.path", path.Join(os.TempDir(), "pauditd.test.log"))
-	c.Set("output.file.mode", 0644)
+	c.Set("output.file.mode", 0o644)
 	c.Set("output.file.user", u.Username)
 	c.Set("output.file.group", g.Name)
 
 	w, err = createOutput(c)
-	assert.EqualError(t, err, "Only one output can be enabled at a time")
+	assert.EqualError(t, err, "only one output can be enabled at a time")
 	assert.Nil(t, w)
 }
 
@@ -159,7 +163,7 @@ func Test_createFilters(t *testing.T) {
 	c = viper.New()
 	c.Set("filters", 1)
 	f, err = createFilters(c)
-	assert.EqualError(t, err, "Could not parse filters object")
+	assert.EqualError(t, err, "could not parse filters object")
 	assert.Empty(t, f)
 
 	// Bad inner filter value
@@ -168,7 +172,7 @@ func Test_createFilters(t *testing.T) {
 	rf = append(rf, "bad filter definition")
 	c.Set("filters", rf)
 	f, err = createFilters(c)
-	assert.EqualError(t, err, "Could not parse filter 1; 'bad filter definition'")
+	assert.EqualError(t, err, "could not parse filter 1; 'bad filter definition'")
 	assert.Empty(t, f)
 
 	// Bad message type - string
@@ -231,7 +235,7 @@ func Test_createFilters(t *testing.T) {
 	rf = append(rf, map[string]interface{}{"syscall": "1", "message_type": "1"})
 	c.Set("filters", rf)
 	f, err = createFilters(c)
-	assert.EqualError(t, err, "Filter 1 is missing the `regex` entry")
+	assert.EqualError(t, err, "filter 1 is missing the `regex` entry")
 	assert.Empty(t, f)
 
 	// Missing message_type
@@ -240,7 +244,7 @@ func Test_createFilters(t *testing.T) {
 	rf = append(rf, map[string]interface{}{"syscall": "1", "regex": "1"})
 	c.Set("filters", rf)
 	f, err = createFilters(c)
-	assert.EqualError(t, err, "Filter 1 is missing either the `key` entry or `syscall` and `message_type` entry")
+	assert.EqualError(t, err, "filter 1 is missing either the `key` entry or `syscall` and `message_type` entry")
 	assert.Empty(t, f)
 
 	// Missing syscall and not a rule key filter (message type is set)
@@ -265,7 +269,7 @@ func Test_createFilters(t *testing.T) {
 	rf = append(rf, map[string]interface{}{"regex": "1"})
 	c.Set("filters", rf)
 	f, err = createFilters(c)
-	assert.EqualError(t, err, "Filter 1 is missing either the `key` entry or `syscall` and `message_type` entry")
+	assert.EqualError(t, err, "filter 1 is missing either the `key` entry or `syscall` and `message_type` entry")
 	assert.Empty(t, f)
 
 	// Good with strings (Syscall Filter)
@@ -316,13 +320,14 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, "testkey", f[0].Key)
 	assert.Empty(t, elb.String())
 	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", lb.String())
-
 }
 
 func Benchmark_MultiPacketMessage(b *testing.B) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		b.Errorf("Failed to configure metric: %v", err)
+	}
 
 	marshaller := marshaller.NewAuditMarshaller(output.NewAuditWriter(&noopWriter{}, 1), uint16(1300), uint16(1399), false, false, 1, []marshaller.AuditFilter{})
 
@@ -364,15 +369,15 @@ func Benchmark_MultiPacketMessage(b *testing.B) {
 	}
 }
 
-type noopWriter struct{ t *testing.T }
+type noopWriter struct{}
 
-func (t *noopWriter) Write(a []byte) (int, error) {
+func (n *noopWriter) Write(_ []byte) (int, error) {
 	return 0, nil
 }
 
 func createTempFile(t *testing.T, name string, contents string) string {
 	file := os.TempDir() + string(os.PathSeparator) + "pauditd." + name
-	if err := ioutil.WriteFile(file, []byte(contents), os.FileMode(0644)); err != nil {
+	if err := os.WriteFile(file, []byte(contents), os.FileMode(0o644)); err != nil {
 		t.Fatal("Failed to create temp file", err)
 	}
 	return file

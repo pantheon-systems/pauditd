@@ -1,0 +1,230 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.24.x"
+  USE_GO_CACHE: false
+  IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/master' }}
+
+
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    name: Install dependencies
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
+
+      - name: "Download dependencies"
+        run: go mod download
+        working-directory: .
+
+        env:
+          GO111MODULE: on
+
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [deps]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
+
+      - name: "Tidy and Format"
+        run: |
+          go mod tidy
+          go fmt ./...
+        working-directory: .
+
+      - name: "Check for changes"
+        id: changed-files
+        uses: tj-actions/verify-changed-files@v20.0.4
+
+      - name: "Fail if formatting modified files"
+        if: steps.changed-files.outputs.files_changed == 'true'
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.changed_files }}
+        run: |
+          echo "The following files have changed:"
+          for file in ${ALL_CHANGED_FILES}; do
+            echo "$file"
+          done
+          exit 1
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [deps]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
+
+      - name: "Run golangci-lint"
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: v2.0
+          working-directory: .
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    needs: [deps]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
+
+      - name: "Install go-ctrf-json-reporter"
+        run: go install github.com/ctrf-io/go-ctrf-json-reporter/cmd/go-ctrf-json-reporter@latest
+        working-directory: .
+
+      - name: "Run Go tests and generate CTRF"
+        continue-on-error: true
+        run: |
+          go test -v -json ./... | go-ctrf-json-reporter -output ctrf-report.json
+        working-directory: .
+
+      - name: "Report results to GitHub"
+        uses: ctrf-io/github-test-reporter@v1
+        with:
+          report-path: "./ctrf-report.json"
+
+      - name: "Abort if tests failed"
+        run: |
+          if jq -r '.results.tests[] | select(.status == "failed") | .name' ctrf-report.json | grep .; then
+            echo "❌ Tests failed"
+            exit 1
+          fi
+        working-directory: .
+
+  goreleaser-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Check goreleaser's Configuration"
+        uses: ./.github/actions/run-goreleaser
+        with:
+          args: check
+          workdir: .
+
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: [deps, goreleaser-check]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go and Cache Modules"
+        uses: ./.github/actions/setup-go-and-cache
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          use-cache: ${{ env.USE_GO_CACHE }}
+
+      - name: "Build Artifacts"
+        uses: ./.github/actions/run-goreleaser
+        with:
+          args: release --clean --snapshot --skip=publish
+          workdir: .
+
+      - name: "Upload Build Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/**
+            !dist/*.txt
+
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    needs: [format, lint, test, build]
+    steps:
+      - name: "Checkout code"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Fetch tags"
+        run: git fetch --tags --force
+
+      - name: "Install and Run autotag"
+        if: env.IS_MAIN_BRANCH == 'true'
+        uses: pantheon-systems/action-autotag@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Download RPM Artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist
+
+      - name: "Setup Ruby"
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.1"  # or another version as required
+
+      - name: "Install Package Cloud"
+        run: gem install package_cloud
+
+      - name: "Publish RPMs to PackageCloud"
+        if: env.IS_MAIN_BRANCH == 'true'
+        run: |
+          for ver in 22 28 29 el/7; do
+            package_cloud push pantheon/public/fedora/$ver ./dist/*.rpm
+          done
+
+      - name: "Publish GitHub Release"
+        if: env.IS_MAIN_BRANCH == 'true'
+        uses: ./.github/actions/run-goreleaser
+        with:
+          args: release --clean --skip=nfpm,docker
+          workdir: .

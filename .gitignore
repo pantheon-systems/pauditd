@@ -10,3 +10,4 @@ pauditd.yaml
 node_modules
 vendor/
 .vscode
+ctrf-report.json

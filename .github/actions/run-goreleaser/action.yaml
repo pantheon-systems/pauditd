@@ -1,0 +1,20 @@
+name: Run GoReleaser
+description: Wrapper around GoReleaser CLI to centralize release configuration.
+inputs:
+  args:
+    description: Arguments to pass to GoReleaser
+    required: true
+  workdir:
+    description: Working directory for GoReleaser
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v6
+      with:
+        args: ${{ inputs.args }}
+        version: "~> v2"
+        workdir: ${{ inputs.workdir }}
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}

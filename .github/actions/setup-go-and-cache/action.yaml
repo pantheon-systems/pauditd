@@ -1,0 +1,23 @@
+name: Setup Go and optionally cache modules
+description: Checkout code, set up Go, and optionally enable module caching.
+
+inputs:
+  go-version:
+    description: Version of Go to install
+    required: true
+  use-cache:
+    description: Whether to enable caching (must be "true" or "false" as strings)
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Ensure code directory exists (act workaround)"
+      run: mkdir -p code
+      shell: bash
+
+    - name: "Setup Go"
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+        cache: ${{ inputs.use-cache }}

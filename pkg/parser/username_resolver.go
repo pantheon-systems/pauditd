@@ -12,6 +12,8 @@ type UsernameResolver interface {
 // DefaultUsernameResolver is the default system resolver
 type DefaultUsernameResolver struct{}
 
+// NewDefaultUsernameResolver creates a default username resolver
+// that resolves usernames without caching.
 func NewDefaultUsernameResolver() UsernameResolver {
 	return &DefaultUsernameResolver{}
 }

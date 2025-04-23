@@ -8,9 +8,8 @@ import (
 	"testing"
 
 	"github.com/pantheon-systems/pauditd/pkg/metric"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
-
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +21,9 @@ func TestNotificationServiceTransformerRegisteration(t *testing.T) {
 func TestNotificationServiceTransformerTransform(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	transformer := NotificationServiceTransformer{
 		hostname: "test-hostname",
@@ -41,7 +42,9 @@ func TestNotificationServiceTransformerTransform(t *testing.T) {
 func TestNotificationServiceTransformerTransformNoRuleKeyIgnore(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Fatalf("Failed to configure metrics: %v", err)
+	}
 
 	transformer := NotificationServiceTransformer{
 		hostname:        "test-hostname",
@@ -73,11 +76,16 @@ func TestNotificationServiceTransformerTransformNoRuleKeyStdout(t *testing.T) {
 	outC := make(chan string)
 	go func() {
 		var buf bytes.Buffer
-		io.Copy(&buf, r)
+		if _, err := io.Copy(&buf, r); err != nil {
+			t.Errorf("Failed to copy data: %v", err)
+		}
 		outC <- buf.String()
 	}()
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Errorf("Failed to close writer: %v", err)
+	}
+
 	os.Stdout = old // restoring the real stdout
 	out := <-outC
 
@@ -85,6 +93,7 @@ func TestNotificationServiceTransformerTransformNoRuleKeyStdout(t *testing.T) {
 	assert.Nil(t, resultBody)
 	assert.Nil(t, err)
 }
+
 func TestNotificationServiceTransformer_ExtraAttributes(t *testing.T) {
 	extraAttributes := map[string]string{
 		"key1": "value1",
@@ -102,7 +111,9 @@ func TestNotificationServiceTransformer_ExtraAttributes(t *testing.T) {
 
 	resultBody, err := transformer.Transform(traceID, body)
 	notifResult := &notification{}
-	json.Unmarshal(resultBody, &notifResult)
+	if err := json.Unmarshal(resultBody, &notifResult); err != nil {
+		t.Errorf("Failed to unmarshal JSON: %v", err)
+	}
 
 	assert.Nil(t, err)
 	assert.Contains(t, notifResult.Attributes, "key1")

@@ -1,0 +1,30 @@
+{
+  "name": "Go Debian-12.10",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "go mod download",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.Go"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash",
+            "args": ["--login"]
+          }
+        }
+      }
+    }
+  },
+  "remoteUser": "root",
+  "mounts": [
+    "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock"
+  ],
+  "features": {
+    "docker-in-docker": "latest"
+  }
+}

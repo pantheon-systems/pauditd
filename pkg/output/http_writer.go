@@ -55,12 +55,12 @@ func (w *HTTPWriter) Write(p []byte) (n int, err error) {
 		if r := recover(); r != nil {
 			_, ok := r.(error)
 			if !ok {
-				logger.Error("pkg: %v", r)
+				slog.Error(fmt.Sprintf("pkg: %v", r))
 			}
 			w.cancelFunc()
-			logger.Info("Waiting for goroutines to complete")
+			slog.Info("Waiting for goroutines to complete")
 			w.wg.Wait()
-			logger.Info("Goroutines completed")
+			slog.Info("Goroutines completed")
 			os.Exit(0)
 		}
 	}()
@@ -104,39 +104,50 @@ func (w *HTTPWriter) Process(ctx context.Context) {
 			}
 
 			traceID := uuid.NewV1()
-
-			if w.debug {
-				logger.Info("{ \"trace_id\": \"%s\", \"msg\": %s }", traceID, strings.TrimSuffix(string(transport.message), "\n"))
-			}
-
 			body, err := w.ResponseBodyTransformer.Transform(traceID, transport.message)
 			if err != nil || body == nil {
+				logger.Error(fmt.Sprintf("Message transformation failed: %v", err))
 				continue
 			}
 			if w.debug {
-				logger.Info(string(body))
+				logger.Info("http_writer.process",
+					"trace_id", traceID,
+					"original", strings.TrimSpace(string(transport.message)),
+					"transformed", string(body),
+					"event", "http.write",
+					"component", "http_writer",
+				)
 			}
 			payloadReader := bytes.NewReader(body)
 
 			req, err := http.NewRequest(http.MethodPost, w.url, payloadReader)
 			if err != nil {
-				logger.Error("HTTPWriter.Process could not create new request: %s", err.Error())
+				logger.Error(fmt.Sprintf("HTTPWriter.Process failed to create HTTP request: %v", err))
 				continue
 			}
 
 			if w.traceHeaderName != "" {
 				req.Header.Add(w.traceHeaderName, traceID.String())
+				slog.Info("http_writer.header_injection",
+					"event", "header.inject",
+					"component", "http_writer",
+					"trace_id", traceID,
+					"header_name", w.traceHeaderName,
+					"header_value", traceID.String(),
+				)
 			}
 
 			resp, err := w.client.Do(req.WithContext(ctx))
 			if err != nil {
-				logger.Error("HTTPWriter.Process could not send request: %s", err.Error())
+				logger.Error(fmt.Sprintf("HTTPWriter.Process failed to send HTTP request: %v", err))
 				metric.GetClient().Increment("http_writer.request_error.count")
 				continue
 			}
 
 			metric.GetClient().Increment(fmt.Sprintf("http_code.%d", resp.StatusCode))
-			resp.Body.Close()
+			if err := resp.Body.Close(); err != nil {
+				logger.Error("Failed to close response body", "error", err)
+			}
 
 			transport.timer.Send("http_writer.latency")
 		}
@@ -152,7 +163,7 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	}
 
 	if writerConfig.debug {
-		logger.Info(writerConfig)
+		logger.Info(fmt.Sprintf("%v", writerConfig))
 	}
 
 	queue := make(chan *messageTransport, writerConfig.bufferSize)
@@ -164,13 +175,13 @@ func newHTTPWriter(config *viper.Viper) (*AuditWriter, error) {
 	go func() {
 		select {
 		case v := <-signals:
-			logger.Info("Received signal %v\n", v)
+			logger.Info(fmt.Sprintf("Received signal %v\n", v))
 			close(queue)
 			cancel()
 		case <-ctx.Done():
 			logger.Info("cancel() called! Shutting down")
 		}
-		logger.Info("Shutting down %d workers...\n", writerConfig.workerCount)
+		logger.Info(fmt.Sprintf("Shutting down %d workers...\n", writerConfig.workerCount))
 		for i := 0; i < writerConfig.workerCount; i++ {
 			workerShutdownSignals <- struct{}{}
 		}

@@ -3,28 +3,28 @@ package marshaller
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"regexp"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/spf13/viper"
-
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMarshallerConstants(t *testing.T) {
-	assert.Equal(t, 1320, EVENT_EOE)
+	assert.Equal(t, 1320, EventEOE)
 }
 
 func TestAuditMarshaller_Consume(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("metrics.enabled", false)
-	metric.Configure(cfg)
+	if err := metric.Configure(cfg); err != nil {
+		t.Errorf("Failed to configure metric: %v", err)
+	}
 
 	w := &bytes.Buffer{}
 	m := NewAuditMarshaller(output.NewAuditWriter(w, 1), uint16(1100), uint16(1399), false, false, 0, []AuditFilter{})
@@ -131,9 +131,8 @@ func TestAuditMarshaller_Consume(t *testing.T) {
 }
 
 func TestAuditMarshaller_completeMessage(t *testing.T) {
-	//TODO: cant test because completeMessage calls exit
+	// TODO: cant test because completeMessage calls exit
 	t.Skip()
-	return
 	// lb, elb := hookLogger()
 	// m := NewAuditMarshaller(NewAuditWriter(&FailWriter{}, 1), uint16(1300), uint16(1399), false, false, 0, []AuditFilter{})
 
@@ -154,14 +153,21 @@ func TestAuditMarshaller_completeMessage(t *testing.T) {
 }
 
 func TestAuditMarshaller_dropMessage(t *testing.T) {
+	// Configure the metric package
+	cfg := viper.New()
+	// Disable metrics, there is no mock for metric.Client yet
+	cfg.Set("metrics.enabled", false)
+	if err := metric.Configure(cfg); err != nil {
+		t.Errorf("Failed to configure metric: %v", err)
+	}
 	w := &bytes.Buffer{}
 	filters := []AuditFilter{
-		AuditFilter{
+		{
 			Key:    "test-key",
 			Action: Keep,
 			Regex:  regexp.MustCompile(`name=\\"/srv/bindings/tmp/`),
 		},
-		AuditFilter{
+		{
 			Key:    "test-key",
 			Action: Drop,
 			Regex:  regexp.MustCompile(".*"),
@@ -170,93 +176,96 @@ func TestAuditMarshaller_dropMessage(t *testing.T) {
 
 	m := NewAuditMarshaller(output.NewAuditWriter(w, 1), uint16(1100), uint16(1399), false, false, 0, filters)
 
-	message := &parser.AuditMessageGroup{
-		RuleKey: "test-key",
-		Seq:     24290861,
-		Msgs: []*parser.AuditMessage{
-			&parser.AuditMessage{
-				Seq:  24290861,
-				Type: 1300,
-				Data: `"arch=c000003e syscall=87 success=no exit=-2 a0=527b340 a1=0 a2=5 a3=0 items=1 ppid=2231 pid=2232 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=\"chef-solo\" exe=\"/opt/chef/embedded/bin/ruby\" key=\"binding-file-ops\""`,
+	// Subtest 1: Test dropMessage with a matching "test-key" and Drop action
+	t.Run("DropAction", func(t *testing.T) {
+		message := &parser.AuditMessageGroup{
+			RuleKey: "test-key",
+			Seq:     24290861,
+			Msgs: []*parser.AuditMessage{
+				{
+					Seq:  24290861,
+					Type: 1300,
+					Data: `"arch=c000003e syscall=87 success=no exit=-2 a0=527b340 a1=0 a2=5 a3=0 items=1 ppid=2231 pid=2232 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=\"chef-solo\" exe=\"/opt/chef/embedded/bin/ruby\" key=\"binding-file-ops\""`,
+				},
+				{
+					Seq:  24290861,
+					Type: 1307,
+					Data: `"cwd=\"/\""`,
+				},
+				{
+					Seq:  24290861,
+					Type: 1302,
+					Data: `"item=0 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/tmp/\" inode=39193130 dev=08:10 mode=040770 ouid=0 ogid=10025 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
 			},
-			&parser.AuditMessage{
-				Seq:  24290861,
-				Type: 1307,
-				Data: `"cwd=\"/\""`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290861,
-				Type: 1302,
-				Data: `"item=0 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/tmp/\" inode=39193130 dev=08:10 mode=040770 ouid=0 ogid=10025 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-		},
-	}
-	//result := m.dropMessage(message)
-	result := Drop
-	assert.Equal(t, Drop, result)
+		}
+		result := m.dropMessage(message)
+		assert.Equal(t, Drop, result)
+	})
 
-	message = &parser.AuditMessageGroup{
-		RuleKey: "test-key",
-		Seq:     24290860,
-		Msgs: []*parser.AuditMessage{
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1300,
-				Data: `"arch=c000003e syscall=82 success=yes exit=0 a0=4f104c0 a1=4c29720 a2=0 a3=7fa90dd68750 items=5 ppid=2231 pid=2232 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=\"chef-solo\" exe=\"/opt/chef/embedded/bin/ruby\" key=\"binding-file-ops\""`,
+	// Subtest 2: Test dropMessage with a matching "test-key" and Keep action
+	t.Run("KeepAction", func(t *testing.T) {
+		message := &parser.AuditMessageGroup{
+			RuleKey: "test-key",
+			Seq:     24290860,
+			Msgs: []*parser.AuditMessage{
+				{
+					Seq:  24290860,
+					Type: 1300,
+					Data: `"arch=c000003e syscall=82 success=yes exit=0 a0=4f104c0 a1=4c29720 a2=0 a3=7fa90dd68750 items=5 ppid=2231 pid=2232 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=\"chef-solo\" exe=\"/opt/chef/embedded/bin/ruby\" key=\"binding-file-ops\""`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1307,
+					Data: `"cwd=\"/\""`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1302,
+					Data: `"item=0 name=\"/srv/bindings/tmp/\" inode=28573698 dev=08:10 mode=041777 ouid=0 ogid=0 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1302,
+					Data: `"item=1 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/\" inode=39193107 dev=08:10 mode=040750 ouid=10025 ogid=1031 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1302,
+					Data: `"item=2 name=\"/srv/bindings/tmp/chef-rendered-template20180503-2232-18plkl0\" inode=28576707 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=DELETE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1302,
+					Data: `"item=3 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/chef.stamp\" inode=28576776 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=DELETE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1302,
+					Data: `"item=4 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/chef.stamp\" inode=28576707 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
+				},
+				{
+					Seq:  24290860,
+					Type: 1327,
+					Data: `"proctitle=2F6F70742F636865662F656D6265646465642F62696E2F72756279002F6F70742F636865662F62696E2F636865662D736F6C6F002D2D6E6F2D666F726B002D6A002F7661722F746D702F6A656E6B696E732D636865662D636865665F736F6C6F5F62696E64696E67732D3233313038322D32343433375F363237362E6A736F6E"`,
+				},
 			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1307,
-				Data: `"cwd=\"/\""`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1302,
-				Data: `"item=0 name=\"/srv/bindings/tmp/\" inode=28573698 dev=08:10 mode=041777 ouid=0 ogid=0 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1302,
-				Data: `"item=1 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/\" inode=39193107 dev=08:10 mode=040750 ouid=10025 ogid=1031 rdev=00:00 nametype=PARENT cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1302,
-				Data: `"item=2 name=\"/srv/bindings/tmp/chef-rendered-template20180503-2232-18plkl0\" inode=28576707 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=DELETE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1302,
-				Data: `"item=3 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/chef.stamp\" inode=28576776 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=DELETE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1302,
-				Data: `"item=4 name=\"/srv/bindings/50c7f279136440da99f1b9bdacab3b11/chef.stamp\" inode=28576707 dev=08:10 mode=0100644 ouid=0 ogid=0 rdev=00:00 nametype=CREATE cap_fp=0000000000000000 cap_fi=0000000000000000 cap_fe=0 cap_fver=0"`,
-			},
-			&parser.AuditMessage{
-				Seq:  24290860,
-				Type: 1327,
-				Data: `"proctitle=2F6F70742F636865662F656D6265646465642F62696E2F72756279002F6F70742F636865662F62696E2F636865662D736F6C6F002D2D6E6F2D666F726B002D6A002F7661722F746D702F6A656E6B696E732D636865662D636865665F736F6C6F5F62696E64696E67732D3233313038322D32343433375F363237362E6A736F6E"`,
-			},
-		},
-	}
-
-	result = m.dropMessage(message)
-	assert.Equal(t, Keep, result)
-	fmt.Printf("%+v\n", result)
+		}
+		result := m.dropMessage(message)
+		assert.Equal(t, Keep, result)
+	})
 }
 
 func TestAuditMarshaller_processAndSetFilters(t *testing.T) {
 	w := &bytes.Buffer{}
 
 	filters := []AuditFilter{
-		AuditFilter{
+		{
 			Key:    "test-key",
 			Action: Keep,
 			Regex:  regexp.MustCompile(""),
 		},
-		AuditFilter{
+		{
 			Key:    "test-key",
 			Action: Drop,
 			Regex:  regexp.MustCompile(""),
@@ -284,6 +293,6 @@ func new1320(seq string) *syscall.NetlinkMessage {
 
 type FailWriter struct{}
 
-func (f *FailWriter) Write(p []byte) (n int, err error) {
+func (f *FailWriter) Write(_ []byte) (n int, err error) {
 	return 0, errors.New("derp")
 }

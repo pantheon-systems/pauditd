@@ -1,3 +1,5 @@
+// Package parser provides utilities for parsing and resolving data,
+// including caching mechanisms for username resolution.
 package parser
 
 import (

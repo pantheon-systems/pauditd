@@ -13,7 +13,7 @@ func Test_newStdOutWriter(t *testing.T) {
 	c := viper.New()
 	c.Set("output.stdout.attempts", 0)
 	w, err := newStdOutWriter(c)
-	assert.EqualError(t, err, "Output attempts for stdout must be at least 1, 0 provided")
+	assert.EqualError(t, err, "output attempts for stdout must be at least 1, 0 provided")
 	assert.Nil(t, w)
 
 	// All good

@@ -1,7 +1,6 @@
 package output
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -21,54 +20,55 @@ func init() {
 func newFileWriter(config *viper.Viper) (*AuditWriter, error) {
 	attempts := config.GetInt("output.file.attempts")
 	if attempts < 1 {
-		return nil, fmt.Errorf("Output attempts for file must be at least 1, %v provided", attempts)
+		return nil, fmt.Errorf("output attempts for file must be at least 1, %d provided", attempts)
 	}
 
-	mode := os.FileMode(config.GetInt("output.file.mode"))
-	if mode < 1 {
-		return nil, errors.New("Output file mode should be greater than 0000")
+	mode := config.GetInt("output.file.mode")
+	if mode <= 0 {
+		return nil, fmt.Errorf("output file mode should be greater than 0000")
 	}
 
-	f, err := os.OpenFile(
-		config.GetString("output.file.path"),
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, mode,
-	)
+	path := config.GetString("output.file.path")
+	if path == "" {
+		return nil, fmt.Errorf("output file path cannot be empty")
+	}
 
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.FileMode(mode))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open output file. Error: %s", err)
+		return nil, fmt.Errorf("failed to open output file. Error: %v", err)
 	}
 
-	if err := f.Chmod(mode); err != nil {
-		return nil, fmt.Errorf("Failed to set file permissions. Error: %s", err)
+	if err := file.Chmod(os.FileMode(mode)); err != nil {
+		return nil, fmt.Errorf("failed to set file permissions. Error: %s", err)
 	}
 
 	uname := config.GetString("output.file.user")
 	u, err := user.Lookup(uname)
 	if err != nil {
-		return nil, fmt.Errorf("Could not find uid for user %s. Error: %s", uname, err)
+		return nil, fmt.Errorf("could not find uid for user %s. Error: %s", uname, err)
 	}
 
 	gname := config.GetString("output.file.group")
 	g, err := user.LookupGroup(gname)
 	if err != nil {
-		return nil, fmt.Errorf("Could not find gid for group %s. Error: %s", gname, err)
+		return nil, fmt.Errorf("could not find gid for group %s. Error: %s", gname, err)
 	}
 
 	uid, err := strconv.ParseInt(u.Uid, 10, 32)
 	if err != nil {
-		return nil, fmt.Errorf("Found uid could not be parsed. Error: %s", err)
+		return nil, fmt.Errorf("found uid could not be parsed. Error: %s", err)
 	}
 
 	gid, err := strconv.ParseInt(g.Gid, 10, 32)
 	if err != nil {
-		return nil, fmt.Errorf("Found gid could not be parsed. Error: %s", err)
+		return nil, fmt.Errorf("found gid could not be parsed. Error: %s", err)
 	}
 
-	if err = f.Chown(int(uid), int(gid)); err != nil {
-		return nil, fmt.Errorf("Could not chown output file. Error: %s", err)
+	if err = file.Chown(int(uid), int(gid)); err != nil {
+		return nil, fmt.Errorf("could not chown output file. Error: %s", err)
 	}
 
-	writer := NewAuditWriter(f, attempts)
+	writer := NewAuditWriter(file, attempts)
 	go handleLogRotation(config, writer)
 	return writer, nil
 }
@@ -84,12 +84,15 @@ func handleLogRotation(config *viper.Viper, writer *AuditWriter) {
 			logger.Error("Error re-opening log file. Exiting.")
 		}
 
-		oldFile := writer.w.(*os.File)
-		writer.w = newWriter.w
-
-		err = oldFile.Close()
-		if err != nil {
-			logger.Error("Error closing old log file: %+v\n", err)
+		oldFile, ok := writer.w.(*os.File)
+		if !ok {
+			logger.Error("writer.w is not of type *os.File. Exiting.")
+			os.Exit(1)
 		}
+
+		if err := oldFile.Close(); err != nil {
+			logger.Error("failed to close old file: %v", err)
+		}
+		writer.w = newWriter.w
 	}
 }
