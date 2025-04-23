@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/pantheon-systems/pauditd/pkg/logger"
-
 	"github.com/spf13/viper"
 )
 

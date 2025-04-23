@@ -191,16 +191,16 @@ func sendReceive(t *testing.T, n *NetlinkClient, packet *NetlinkPacket, payload 
 
 // Resets global loggers
 func resetLogger() {
-	logger.SetOutput(os.Stdout,"info")
-	logger.SetOutput(os.Stderr,"error")
+	logger.SetOutput(os.Stdout, "info")
+	logger.SetOutput(os.Stderr, "error")
 }
 
 // Hooks the global loggers writers so you can assert their contents
 func hookLogger() (lb *bytes.Buffer, elb *bytes.Buffer) {
 	lb = &bytes.Buffer{}
-	logger.SetOutput(lb,"info")
+	logger.SetOutput(lb, "info")
 
 	elb = &bytes.Buffer{}
-	logger.SetOutput(elb,"error")
+	logger.SetOutput(elb, "error")
 	return
 }

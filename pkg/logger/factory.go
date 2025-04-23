@@ -1,3 +1,5 @@
+// Package logger provides logging utilities for the application from slog package,
+// including support for structured logging and integration with external interfaces.
 package logger
 
 import (
@@ -7,48 +9,53 @@ import (
 	"os"
 )
 
-var info *slog.Logger
-var error *slog.Logger
+var (
+	infoLogger  *slog.Logger
+	errorLogger *slog.Logger
+)
 
 func init() {
-    info = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-    error = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
+	infoLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	errorLogger = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 }
 
+// Configure sets the logging level for both info and error loggers.
 func Configure(level slog.Level) {
-    info = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-    error = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+	infoLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
+	errorLogger = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
 }
 
+// SetOutput sets the output destination for the specified logger ("info" or "error").
 func SetOutput(output io.Writer, logger string) {
-
-    if logger == "info" {
-    info = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelInfo}))
-    }
-    if logger == "error" {
-    error = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelError}))
-    }
+	if logger == "info" {
+		infoLogger = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	}
+	if logger == "error" {
+		errorLogger = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelError}))
+	}
 }
 
+// Info logs an informational message using the info logger.
 func Info(msg string, args ...any) {
-    info.Info(msg, args...)
+	infoLogger.Info(msg, args...)
 }
 
+// Error logs an error message using the error logger.
 func Error(msg string, args ...any) {
-    error.Error(msg, args...)
+	errorLogger.Error(msg, args...)
 }
 
-// LoggerWrapper wraps *slog.Logger to implement the certinel.logger interface
-type LoggerWrapper struct {
-    logger *slog.Logger
+// Wrapper wraps *slog.Logger to implement the certinel.logger interface.
+type Wrapper struct {
+	logger *slog.Logger
 }
 
-// Printf implements the Printf method required by certinel.logger
-func (lw *LoggerWrapper) Printf(format string, args ...any) {
-    lw.logger.Info(fmt.Sprintf(format, args...))
+// Printf implements the Printf method required by certinel.logger.
+func (lw *Wrapper) Printf(format string, args ...any) {
+	lw.logger.Info(fmt.Sprintf(format, args...))
 }
 
-// GetLoggerWrapper returns a LoggerWrapper for the info logger
-func GetLoggerWrapper() *LoggerWrapper {
-    return &LoggerWrapper{logger: info}
+// GetLoggerWrapper returns a Wrapper for the info logger to implement the certinel.logger interface.
+func GetLoggerWrapper() *Wrapper {
+	return &Wrapper{logger: infoLogger}
 }

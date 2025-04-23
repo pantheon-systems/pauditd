@@ -5,10 +5,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
 	"github.com/pantheon-systems/pauditd/pkg/parser"
-	"github.com/pantheon-systems/pauditd/pkg/logger"
 )
 
 // EventEOE represents the end of a multi-packet event in the audit system.
