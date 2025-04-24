@@ -64,10 +64,10 @@ func (lw *Wrapper) Printf(format string, args ...any) {
 	lw.logger.Info(fmt.Sprintf(format, args...))
 }
 
-// With implements the method required to customize certinel.logger.
-func (lw *Wrapper) With(attrs []any) *Wrapper {
+// CustomizeLogger creates a new Wrapper with the specified attributes.
+func CustomizeLogger(attrs ...any) *Wrapper {
 	return &Wrapper{
-		logger: lw.logger.With(attrs...),
+		logger: infoLogger.With(attrs...),
 	}
 }
 
