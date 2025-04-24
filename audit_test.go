@@ -20,7 +20,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var logline map[string]interface{}
+type Logline struct {
+	Time    string `json:"time"`
+	Level   string `json:"level"`
+	Msg     string `json:"msg"`
+	App     string `json:"app"`
+	Version string `json:"version"`
+}
+
+var logline Logline
 
 func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
@@ -269,7 +277,7 @@ func Test_createFilters(t *testing.T) {
 		fmt.Println("Error unmarshaling logger output JSON:", perr)
 	}
 
-	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", logline["msg"])
+	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Missing syscall and missing key and missing message type
 	c = viper.New()
@@ -299,7 +307,7 @@ func Test_createFilters(t *testing.T) {
 	if perr != nil {
 		fmt.Println("Error unmarshaling logger output JSON:", perr)
 	}
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline["msg"])
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Good with ints (Syscall Filter)
 	lb.Reset()
@@ -320,7 +328,7 @@ func Test_createFilters(t *testing.T) {
 		fmt.Println("Error unmarshaling logger output JSON:", perr)
 	}
 
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline["msg"])
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Good with strings (RuleKey Filter)
 	lb.Reset()
@@ -343,7 +351,7 @@ func Test_createFilters(t *testing.T) {
 		fmt.Println("Error unmarshaling logger output JSON:", perr)
 	}
 
-	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", logline["msg"])
+	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", logline.Msg)
 }
 
 func Benchmark_MultiPacketMessage(b *testing.B) {

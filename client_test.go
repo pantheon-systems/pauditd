@@ -45,7 +45,7 @@ func TestNetlinkClient_KeepConnection(t *testing.T) {
 		fmt.Println("Error unmarshaling logger output JSON:", perr)
 	}
 
-	assert.Equal(t, "Error occurred while trying to keep the connection:", logline["msg"], "Figured we would have an error")
+	assert.Equal(t, "Error occurred while trying to keep the connection:", logline.Msg, "Figured we would have an error")
 }
 
 func TestNetlinkClient_SendReceive(t *testing.T) {

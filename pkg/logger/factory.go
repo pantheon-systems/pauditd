@@ -30,17 +30,17 @@ func init() {
 
 // Configure sets the logging level for both info and error loggers.
 func Configure(level slog.Level) {
-	infoLogger = newLogger(os.Stdout, slog.LevelInfo)
-	errorLogger = newLogger(os.Stderr, slog.LevelError)
+	infoLogger = newLogger(os.Stdout, level)
+	errorLogger = newLogger(os.Stderr, level)
 }
 
 // SetOutput sets the output destination for the specified logger ("info" or "error").
 func SetOutput(output io.Writer, logger string) {
 	if logger == "info" {
-		infoLogger = newLogger(os.Stdout, slog.LevelInfo)
+		infoLogger = newLogger(output, slog.LevelInfo)
 	}
 	if logger == "error" {
-		errorLogger = newLogger(os.Stderr, slog.LevelError)
+		errorLogger = newLogger(output, slog.LevelError)
 	}
 }
 
@@ -64,6 +64,7 @@ func (lw *Wrapper) Printf(format string, args ...any) {
 	lw.logger.Info(fmt.Sprintf(format, args...))
 }
 
+// With implements the method required to customize certinel.logger.
 func (lw *Wrapper) With(attrs []any) *Wrapper {
 	return &Wrapper{
 		logger: lw.logger.With(attrs...),
