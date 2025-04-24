@@ -12,26 +12,35 @@ import (
 var (
 	infoLogger  *slog.Logger
 	errorLogger *slog.Logger
+	appName     = "pauditd"
+	appVersion  = "dev" // overridden at build time
 )
 
+func newLogger(output io.Writer, level slog.Level) *slog.Logger {
+	return slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: level})).With(
+		slog.String("app", appName),
+		slog.String("version", appVersion),
+	)
+}
+
 func init() {
-	infoLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	errorLogger = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
+	infoLogger = newLogger(os.Stdout, slog.LevelInfo)
+	errorLogger = newLogger(os.Stderr, slog.LevelError)
 }
 
 // Configure sets the logging level for both info and error loggers.
 func Configure(level slog.Level) {
-	infoLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
-	errorLogger = slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+	infoLogger = newLogger(os.Stdout, slog.LevelInfo)
+	errorLogger = newLogger(os.Stderr, slog.LevelError)
 }
 
 // SetOutput sets the output destination for the specified logger ("info" or "error").
 func SetOutput(output io.Writer, logger string) {
 	if logger == "info" {
-		infoLogger = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelInfo}))
+		infoLogger = newLogger(os.Stdout, slog.LevelInfo)
 	}
 	if logger == "error" {
-		errorLogger = slog.New(slog.NewJSONHandler(output, &slog.HandlerOptions{Level: slog.LevelError}))
+		errorLogger = newLogger(os.Stderr, slog.LevelError)
 	}
 }
 
@@ -53,6 +62,12 @@ type Wrapper struct {
 // Printf implements the Printf method required by certinel.logger.
 func (lw *Wrapper) Printf(format string, args ...any) {
 	lw.logger.Info(fmt.Sprintf(format, args...))
+}
+
+func (lw *Wrapper) With(attrs []any) *Wrapper {
+	return &Wrapper{
+		logger: lw.logger.With(attrs...),
+	}
 }
 
 // GetLoggerWrapper returns a Wrapper for the info logger to implement the certinel.logger interface.
