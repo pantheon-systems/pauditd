@@ -75,3 +75,8 @@ func CustomizeLogger(attrs ...any) *Wrapper {
 func GetLoggerWrapper() *Wrapper {
 	return &Wrapper{logger: infoLogger}
 }
+
+// Version returns the application version. This is set at build time and can be overridden.
+func Version() string {
+	return appVersion
+}

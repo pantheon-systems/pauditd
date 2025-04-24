@@ -140,9 +140,15 @@ func createFilters(config *viper.Viper) ([]marshaller.AuditFilter, error) {
 }
 
 func main() {
+	showVersion := flag.Bool("version", false, "Print version and exit")
 	configFile := flag.String("config", "", "Config file location")
 
 	flag.Parse()
+
+	if *showVersion {
+		fmt.Println("pauditd version:", logger.Version())
+		os.Exit(0)
+	}
 
 	if *configFile == "" {
 		logger.Error("A config file must be provided")
