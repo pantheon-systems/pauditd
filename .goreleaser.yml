@@ -8,7 +8,7 @@ builds:
     env:
       - CGO_ENABLED=1
     ldflags:
-      - -s -w
+      - -s -w -X github.com/pantheon-systems/pauditd/pkg/logger.appVersion={{ .Version }}
     goos:
       - linux
     goarch:

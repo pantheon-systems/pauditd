@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
+	"fmt"
 	"os"
 	"syscall"
 	"testing"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +39,13 @@ func TestNetlinkClient_KeepConnection(t *testing.T) {
 	}
 	n.KeepConnection()
 	assert.Equal(t, "", lb.String(), "Got some log lines we did not expect")
-	assert.Equal(t, "Error occurred while trying to keep the connection: bad file descriptor\n", elb.String(), "Figured we would have an error")
+
+	perr := json.Unmarshal([]byte(elb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "Error occurred while trying to keep the connection:", logline.Msg, "Figured we would have an error")
 }
 
 func TestNetlinkClient_SendReceive(t *testing.T) {
@@ -191,16 +199,16 @@ func sendReceive(t *testing.T, n *NetlinkClient, packet *NetlinkPacket, payload 
 
 // Resets global loggers
 func resetLogger() {
-	slog.Info.SetOutput(os.Stdout)
-	slog.Error.SetOutput(os.Stderr)
+	logger.SetOutput(os.Stdout, "info")
+	logger.SetOutput(os.Stderr, "error")
 }
 
 // Hooks the global loggers writers so you can assert their contents
 func hookLogger() (lb *bytes.Buffer, elb *bytes.Buffer) {
 	lb = &bytes.Buffer{}
-	slog.Info.SetOutput(lb)
+	logger.SetOutput(lb, "info")
 
 	elb = &bytes.Buffer{}
-	slog.Error.SetOutput(elb)
+	logger.SetOutput(elb, "error")
 	return
 }

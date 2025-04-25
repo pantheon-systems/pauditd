@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 )
 
 // FilterAction represents the action to take on an audit message (keep or drop).
@@ -57,7 +57,7 @@ func NewAuditFilter(ruleNumber int, obj map[string]interface{}) (*AuditFilter, e
 
 		logMsg = fmt.Sprintf("%sing syscall `%v` containing message type `%v` matching string `%s`\n", af.Action, af.Syscall, af.MessageType, af.Regex.String())
 	}
-	slog.Info.Print(logMsg)
+	logger.Info(logMsg)
 	return af, nil
 }
 

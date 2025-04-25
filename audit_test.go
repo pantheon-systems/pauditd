@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/user"
@@ -10,19 +12,29 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/pantheon-systems/pauditd/pkg/marshaller"
 	"github.com/pantheon-systems/pauditd/pkg/metric"
 	"github.com/pantheon-systems/pauditd/pkg/output"
-	"github.com/pantheon-systems/pauditd/pkg/slog"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
+
+type Logline struct {
+	Time    string `json:"time"`
+	Level   string `json:"level"`
+	Msg     string `json:"msg"`
+	App     string `json:"app"`
+	Version string `json:"version"`
+}
+
+var logline Logline
 
 func Test_loadConfig(t *testing.T) {
 	file := createTempFile(t, "defaultValues.test.yaml", "")
 	defer func() {
 		if err := os.Remove(file); err != nil {
-			slog.Error.Println("Failed to remove file:", err)
+			logger.Error("Failed to remove file:", err)
 		}
 	}()
 
@@ -38,8 +50,6 @@ func Test_loadConfig(t *testing.T) {
 	assert.Equal(t, "pauditd", config.GetString("output.syslog.tag"), "output.syslog.tag should default to pauditd")
 	assert.Equal(t, 3, config.GetInt("output.syslog.attempts"), "output.syslog.attempts should default to 3")
 	assert.Equal(t, 0, config.GetInt("log.flags"), "log.flags should default to 0")
-	assert.Equal(t, 0, slog.Info.Flags(), "stdout log flags was wrong")
-	assert.Equal(t, 0, slog.Error.Flags(), "stderr log flags was wrong")
 	assert.Nil(t, err)
 
 	// parse error
@@ -261,7 +271,13 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", lb.String())
+
+	perr := json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping syscall `` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Missing syscall and missing key and missing message type
 	c = viper.New()
@@ -286,7 +302,12 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", lb.String())
+
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Good with ints (Syscall Filter)
 	lb.Reset()
@@ -302,7 +323,12 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, uint16(1), f[0].MessageType)
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", lb.String())
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping syscall `1` containing message type `1` matching string `1`\n", logline.Msg)
 
 	// Good with strings (RuleKey Filter)
 	lb.Reset()
@@ -319,7 +345,13 @@ func Test_createFilters(t *testing.T) {
 	assert.Equal(t, "1", f[0].Regex.String())
 	assert.Equal(t, "testkey", f[0].Key)
 	assert.Empty(t, elb.String())
-	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", lb.String())
+
+	perr = json.Unmarshal([]byte(lb.Bytes()), &logline)
+	if perr != nil {
+		fmt.Println("Error unmarshaling logger output JSON:", perr)
+	}
+
+	assert.Equal(t, "droping messages with key `testkey` matching string `1`\n", logline.Msg)
 }
 
 func Benchmark_MultiPacketMessage(b *testing.B) {

@@ -6,6 +6,7 @@ pauditd.yaml
 *.test
 *.deb
 *.out
+.devcontainer
 node_modules
 vendor/
 .vscode

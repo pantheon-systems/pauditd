@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 )
 
 // Endianness is an alias for what we assume is the current machine endianness
@@ -51,7 +51,7 @@ type NetlinkClient struct {
 func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW, syscall.NETLINK_AUDIT)
 	if err != nil {
-		slog.Error.Println("Socket creation failed:", err)
+		logger.Error("Socket creation failed:", err)
 		return nil, fmt.Errorf("could not create a socket: %s", err)
 	}
 
@@ -63,9 +63,9 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	}
 
 	if err = syscall.Bind(fd, n.address); err != nil {
-		slog.Error.Println("Socket bind failed:", err)
+		logger.Error("Socket bind failed:", err)
 		if closeErr := syscall.Close(fd); closeErr != nil {
-			slog.Error.Println("Failed to close socket after bind error:", closeErr)
+			logger.Error("Failed to close socket after bind error:", closeErr)
 		}
 		return nil, fmt.Errorf("could not bind to netlink socket: %s", err)
 	}
@@ -73,13 +73,13 @@ func NewNetlinkClient(recvSize int) (*NetlinkClient, error) {
 	// Set the buffer size if requested
 	if recvSize > 0 {
 		if err = syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF, recvSize); err != nil {
-			slog.Error.Println("Failed to set receive buffer size:", err)
+			logger.Error("Failed to set receive buffer size", err)
 		}
 	}
 
 	// Print the current receive buffer size
 	if v, err := syscall.GetsockoptInt(n.fd, syscall.SOL_SOCKET, syscall.SO_RCVBUF); err == nil {
-		slog.Info.Println("Socket receive buffer size:", v)
+		logger.Info("Socket receive buffer size:", v)
 	}
 
 	go func() {
@@ -170,7 +170,7 @@ func (n *NetlinkClient) KeepConnection() {
 
 	err := n.Send(packet, payload)
 	if err != nil {
-		slog.Error.Println("Error occurred while trying to keep the connection:", err)
+		logger.Error("Error occurred while trying to keep the connection:", err)
 	}
 }
 
@@ -178,6 +178,6 @@ func (n *NetlinkClient) KeepConnection() {
 func (n *NetlinkClient) Close() {
 	close(n.cancelKeepConnection)
 	if err := syscall.Close(n.fd); err != nil {
-		slog.Error.Println("failed to close syscall fd:", err)
+		logger.Error("failed to close syscall fd:", err)
 	}
 }

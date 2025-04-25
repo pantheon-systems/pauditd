@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/pantheon-systems/pauditd/pkg/slog"
+	"github.com/pantheon-systems/pauditd/pkg/logger"
 	"github.com/spf13/viper"
 )
 
@@ -80,16 +80,17 @@ func handleLogRotation(config *viper.Viper, writer *AuditWriter) {
 	for range sigc {
 		newWriter, err := newFileWriter(config)
 		if err != nil {
-			slog.Error.Fatalln("Error re-opening log file. Exiting.")
+			logger.Error("Error re-opening log file. Exiting.")
 		}
 
 		oldFile, ok := writer.w.(*os.File)
 		if !ok {
-			slog.Error.Fatalln("writer.w is not of type *os.File. Exiting.")
+			logger.Error("writer.w is not of type *os.File. Exiting.")
+			os.Exit(1)
 		}
 
 		if err := oldFile.Close(); err != nil {
-			slog.Error.Printf("failed to close old file: %v", err)
+			logger.Error("failed to close old file: %v", err)
 		}
 		writer.w = newWriter.w
 	}
