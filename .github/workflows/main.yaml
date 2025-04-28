@@ -214,6 +214,13 @@ jobs:
       - name: "Install Package Cloud"
         run: gem install package_cloud
 
+      - name: "Publish GitHub Release"
+        if: env.IS_MAIN_BRANCH == 'true'
+        uses: ./.github/actions/run-goreleaser
+        with:
+          args: release --clean --skip=nfpm,docker
+          workdir: .
+
       - name: GitHub Token
         id: get-package-cloud-token
         uses: pantheon-systems/common-gh/get-shared-vault-secret@main
@@ -231,10 +238,3 @@ jobs:
           done
         env:
           PACKAGECLOUD_TOKEN: ${{ steps.get-package-cloud-token.outputs.secret }}
-
-      - name: "Publish GitHub Release"
-        if: env.IS_MAIN_BRANCH == 'true'
-        uses: ./.github/actions/run-goreleaser
-        with:
-          args: release --clean --skip=nfpm,docker
-          workdir: .
