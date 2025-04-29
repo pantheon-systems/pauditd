@@ -15,7 +15,6 @@ env:
   USE_GO_CACHE: false
   IS_MAIN_BRANCH: ${{ github.ref == 'refs/heads/master' }}
 
-
 jobs:
   deps:
     runs-on: ubuntu-latest
@@ -210,17 +209,10 @@ jobs:
       - name: "Setup Ruby"
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.1"  # or another version as required
+          ruby-version: "3.1" # or another version as required
 
       - name: "Install Package Cloud"
         run: gem install package_cloud
-
-      - name: "Publish RPMs to PackageCloud"
-        if: env.IS_MAIN_BRANCH == 'true'
-        run: |
-          for ver in 22 28 29 el/7; do
-            package_cloud push pantheon/public/fedora/$ver ./dist/*.rpm
-          done
 
       - name: "Publish GitHub Release"
         if: env.IS_MAIN_BRANCH == 'true'
@@ -228,3 +220,22 @@ jobs:
         with:
           args: release --clean --skip=nfpm,docker
           workdir: .
+
+      # - name: GitHub Token
+      #   id: get-package-cloud-token
+      #   uses: pantheon-systems/common-gh/get-shared-vault-secret@main
+      #   with:
+      #     vault_env: sandbox
+      #     vault_role: ci-pantheon-sshd
+      #     # Full secret path in Vault would be `secret/ci-shared/package-cloud`
+      #     vault_secret_name: package-cloud
+      #     vault_secret_field: pantheon-rw-api-token
+
+      # - name: "Publish RPMs to PackageCloud"
+      #   if: env.IS_MAIN_BRANCH == 'true'
+      #   run: |
+      #     for ver in 22 28 29 el/7; do
+      #       package_cloud push pantheon/public/fedora/$ver ./dist/*.rpm
+      #     done
+      #   env:
+      #     PACKAGECLOUD_TOKEN: ${{ steps.get-package-cloud-token.outputs.secret }}
