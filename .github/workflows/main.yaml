@@ -197,8 +197,6 @@ jobs:
       - name: "Install and Run autotag"
         if: env.IS_MAIN_BRANCH == 'true'
         uses: pantheon-systems/action-autotag@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Download RPM Artifacts"
         uses: actions/download-artifact@v4
@@ -215,11 +213,13 @@ jobs:
         run: gem install package_cloud
 
       - name: "Publish GitHub Release"
-        if: env.IS_MAIN_BRANCH == 'true'
+
         uses: ./.github/actions/run-goreleaser
         with:
           args: release --clean --skip=nfpm,docker
           workdir: .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: GitHub Token
       #   id: get-package-cloud-token
