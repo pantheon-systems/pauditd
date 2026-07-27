@@ -223,13 +223,11 @@ jobs:
 
       # - name: GitHub Token
       #   id: get-package-cloud-token
-      #   uses: pantheon-systems/common-gh/get-shared-vault-secret@main
+      #   uses: pantheon-systems/common-gh/get-gsm-secret@f643adeb61a02c0878d4787353d884716231a2a3 # main 2026-07-24
       #   with:
-      #     vault_env: sandbox
-      #     vault_role: ci-pantheon-sshd
       #     # Full secret path in Vault would be `secret/ci-shared/package-cloud`
-      #     vault_secret_name: package-cloud
-      #     vault_secret_field: pantheon-rw-api-token
+      #     secret_name: package-cloud
+      #     scope: shared
 
       # - name: "Publish RPMs to PackageCloud"
       #   if: env.IS_MAIN_BRANCH == 'true'
