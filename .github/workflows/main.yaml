@@ -92,7 +92,7 @@ jobs:
           use-cache: ${{ env.USE_GO_CACHE }}
 
       - name: "Run golangci-lint"
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.0
           working-directory: .
