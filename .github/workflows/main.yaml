@@ -25,7 +25,7 @@ jobs:
     name: Install dependencies
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -47,7 +47,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -63,7 +63,7 @@ jobs:
 
       - name: "Check for changes"
         id: changed-files
-        uses: tj-actions/verify-changed-files@v20.0.4
+        uses: tj-actions/verify-changed-files@a1c6acee9df209257a246f2cc6ae8cb6581c1edf # v20.0.4
 
       - name: "Fail if formatting modified files"
         if: steps.changed-files.outputs.files_changed == 'true'
@@ -83,7 +83,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -92,9 +92,9 @@ jobs:
           use-cache: ${{ env.USE_GO_CACHE }}
 
       - name: "Run golangci-lint"
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # v9.1.0
         with:
-          version: v2.0
+          version: v2.1
           working-directory: .
 
   test:
@@ -105,7 +105,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -124,7 +124,7 @@ jobs:
         working-directory: .
 
       - name: "Report results to GitHub"
-        uses: ctrf-io/github-test-reporter@v1
+        uses: ctrf-io/github-test-reporter@024bc4b64d997ca9da86833c6b9548c55c620e40 # v1.0.26
         with:
           report-path: "./ctrf-report.json"
 
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -157,7 +157,7 @@ jobs:
     needs: [deps, goreleaser-check]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -172,7 +172,7 @@ jobs:
           workdir: .
 
       - name: "Upload Build Artifacts"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: build-artifacts
           path: |
@@ -187,7 +187,7 @@ jobs:
     needs: [format, lint, test, build]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -196,18 +196,18 @@ jobs:
 
       - name: "Install and Run autotag"
         if: env.IS_MAIN_BRANCH == 'true'
-        uses: pantheon-systems/action-autotag@v1
+        uses: pantheon-systems/action-autotag@1b99f88428c5cbd6f73005e4d684c6a22350f5ab # v1.0.3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Download RPM Artifacts"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: build-artifacts
           path: dist
 
       - name: "Setup Ruby"
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@8aeb6ff8030dd539317f8e1769a044873b56ea71 # v1.268.0
         with:
           ruby-version: "3.1" # or another version as required
 
