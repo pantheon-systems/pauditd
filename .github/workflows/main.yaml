@@ -223,7 +223,7 @@ jobs:
 
       # - name: GitHub Token
       #   id: get-package-cloud-token
-      #   uses: pantheon-systems/common-gh/get-gsm-secret@f643adeb61a02c0878d4787353d884716231a2a3 # main 2026-07-24
+      #   uses: pantheon-systems/action-get-gsm-secret@e1aa1fc741823593ded25d9230bd531919638a52 # v0.1.0
       #   with:
       #     # Full secret path in Vault would be `secret/ci-shared/package-cloud`
       #     secret_name: package-cloud
