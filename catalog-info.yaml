@@ -1,15 +1,14 @@
+# Managed by github-terraform — do not edit manually
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: pauditd
-  description: >
-    A Go-based replacement for Linux's auditd daemon, designed to collect and forward
-    kernel audit events.
+  name: "pauditd"
+  description: "A Go-based replacement for Linux's auditd daemon, designed to collect and forward kernel audit events.\n"
   annotations:
-    backstage.io/techdocs-ref: dir:/
+    "backstage.io/techdocs-ref": "dir:docs/"
 spec:
-  type: service
-  lifecycle: deprecated
-  owner: pie
-  system: appserver-runtime
+  type: "gcp-service"
+  lifecycle: "deprecated"
+  owner: "platform-infrastructure-engineering"
+  system: "appserver-runtime"
