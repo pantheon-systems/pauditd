@@ -25,7 +25,7 @@ jobs:
     name: Install dependencies
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -47,7 +47,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -63,7 +63,7 @@ jobs:
 
       - name: "Check for changes"
         id: changed-files
-        uses: tj-actions/verify-changed-files@v20.0.4
+        uses: tj-actions/verify-changed-files@a1c6acee9df209257a246f2cc6ae8cb6581c1edf # v20.0.4
 
       - name: "Fail if formatting modified files"
         if: steps.changed-files.outputs.files_changed == 'true'
@@ -83,7 +83,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -92,7 +92,7 @@ jobs:
           use-cache: ${{ env.USE_GO_CACHE }}
 
       - name: "Run golangci-lint"
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.0
           working-directory: .
@@ -105,7 +105,7 @@ jobs:
     needs: [deps]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -124,7 +124,7 @@ jobs:
         working-directory: .
 
       - name: "Report results to GitHub"
-        uses: ctrf-io/github-test-reporter@v1
+        uses: ctrf-io/github-test-reporter@7974087018bf4857cf5a9d78723e152038c3fa31 # v1.3.0
         with:
           report-path: "./ctrf-report.json"
 
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -157,7 +157,7 @@ jobs:
     needs: [deps, goreleaser-check]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: "Setup Go and Cache Modules"
         uses: ./.github/actions/setup-go-and-cache
@@ -172,7 +172,7 @@ jobs:
           workdir: .
 
       - name: "Upload Build Artifacts"
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: build-artifacts
           path: |
@@ -187,7 +187,7 @@ jobs:
     needs: [format, lint, test, build]
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -196,18 +196,18 @@ jobs:
 
       - name: "Install and Run autotag"
         if: env.IS_MAIN_BRANCH == 'true'
-        uses: pantheon-systems/action-autotag@v1
+        uses: pantheon-systems/action-autotag@eed8cb09a4c1b2c2f19fea63451749aaea502bd9 # v1.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Download RPM Artifacts"
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: build-artifacts
           path: dist
 
       - name: "Setup Ruby"
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
           ruby-version: "3.1" # or another version as required
 
